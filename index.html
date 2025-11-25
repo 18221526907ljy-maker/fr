@@ -116,7 +116,7 @@
 <div id="container">
     <div id="graph-container">
         <div id="controls">
-            <input type="text" id="search" placeholder="搜索知识点 (e.g. Goodwill)...">
+            <input type="text" id="search" placeholder="搜索知识点 (e.g. Topsy)...">
             <div class="legend">
                 <div class="legend-item"><div class="legend-color" style="background:var(--node-chapter)"></div>章节 (Chapters)</div>
                 <div class="legend-item"><div class="legend-color" style="background:var(--node-standard)"></div>准则 (Standards)</div>
@@ -133,127 +133,130 @@
 </div>
 
 <script>
-    // --- 1. 数据构建 (根据提供的PDF严格提取) ---
+    // --- 1. 数据构建 ---
     const data = {
         nodes: [
             { id: "FR", group: 0, label: "Financial Reporting (FR)", desc: "ACCA FR 核心知识体系" },
             
             // --- Chapter 1: Financial Statements ---
-            { id: "Ch1", group: 1, label: "Ch1: 报表格式", desc: "IFRS 18 Presentation and disclosure" },
-            { id: "SOFP", group: 2, label: "SOFP (资产负债表)", parent: "Ch1", desc: "资产 = 负债 + 权益。需区分流动与非流动。" },
-            { id: "SPL", group: 2, label: "SPL (利润表)", parent: "Ch1", desc: "IFRS 18新规分类：Operating, Investing, Financing, Income Taxes, Discontinued." },
-            { id: "SOCE", group: 2, label: "SOCE (权益变动表)", parent: "Ch1", desc: "记录 Share Capital, Premium, RE, Revaluation Surplus 的变动。" },
+            [cite_start]{ id: "Ch1", group: 1, label: "Ch1: 报表格式", desc: "IFRS 18 Presentation and disclosure [cite: 27]" },
+            [cite_start]{ id: "SOFP", group: 2, label: "SOFP (资产负债表)", parent: "Ch1", desc: "资产 = 负债 + 权益。需区分流动与非流动 [cite: 29, 32]。" },
+            [cite_start]{ id: "SPL", group: 2, label: "SPL (利润表)", parent: "Ch1", desc: "IFRS 18新规分类：Operating, Investing, Financing, Income Taxes, Discontinued [cite: 35-41]。" },
+            [cite_start]{ id: "SOCE", group: 2, label: "SOCE (权益变动表)", parent: "Ch1", desc: "记录 Share Capital, Premium, RE, Revaluation Surplus 的变动 [cite: 52]。" },
 
             // --- Chapter 2: Conceptual Framework ---
-            { id: "Ch2", group: 1, label: "Ch2: 概念框架", desc: "Conceptual Framework" },
-            { id: "Qualitative", group: 3, label: "质量特征", parent: "Ch2", desc: "Fundamental (Relevance, Faithful rep) vs Enhancing (Comparability, Verifiability, Timeliness, Understandability)." },
-            { id: "Elements", group: 3, label: "五大要素", parent: "Ch2", desc: "Asset, Liability, Equity, Income, Expense." },
-            { id: "Measurement", group: 3, label: "计量基础", parent: "Ch2", desc: "Historical Cost vs Current Value (Fair Value, Value in use, Current Cost)." },
-            { id: "Case_Drexler", group: 4, label: "案例: Drexler Co", parent: "Measurement", desc: "【教材例题】\n计算 Historical Cost vs Current Cost 下的账面价值。\nPlant Cost: $500k, Life: 5y.\n两年后 Current Price: $600k.\nHC NBV = 300k\nCC NBV = 360k" },
+            [cite_start]{ id: "Ch2", group: 1, label: "Ch2: 概念框架", desc: "Conceptual Framework [cite: 58]" },
+            [cite_start]{ id: "Qualitative", group: 3, label: "质量特征", parent: "Ch2", desc: "Fundamental (Relevance, Faithful rep) vs Enhancing (Comparability, Verifiability, Timeliness, Understandability) [cite: 89-113]。" },
+            [cite_start]{ id: "Elements", group: 3, label: "五大要素", parent: "Ch2", desc: "Asset, Liability, Equity, Income, Expense [cite: 116]。" },
+            [cite_start]{ id: "Measurement", group: 3, label: "计量基础", parent: "Ch2", desc: "Historical Cost vs Current Value (Fair Value, Value in use, Current Cost) [cite: 129-143]。" },
+            [cite_start]{ id: "Case_Drexler", group: 4, label: "案例: Drexler Co", parent: "Measurement", desc: "【教材例题 [cite: 170]】\n计算 Historical Cost vs Current Cost 下的账面价值。\nPlant Cost: $500k, Life: 5y.\n两年后 Current Price: $600k.\nHC NBV = 300k\nCC NBV = 360k" },
 
             // --- Chapter 3: Regulatory Framework ---
-            { id: "Ch3", group: 1, label: "Ch3: 监管框架", desc: "IFRS Foundation structure & IFRS S1/S2" },
-            { id: "IFRS_S1", group: 2, label: "IFRS S1", parent: "Ch3", desc: "可持续发展披露一般要求。核心内容：Governance, Strategy, Risk Management, Metrics/Targets." },
+            [cite_start]{ id: "Ch3", group: 1, label: "Ch3: 监管框架", desc: "IFRS Foundation structure & IFRS S1/S2 [cite: 194]" },
+            [cite_start]{ id: "IFRS_S1", group: 2, label: "IFRS S1", parent: "Ch3", desc: "可持续发展披露一般要求。核心内容：Governance, Strategy, Risk Management, Metrics/Targets [cite: 245]。" },
 
             // --- Chapter 4: Assets (Huge Chapter) ---
-            { id: "Ch4", group: 1, label: "Ch4: 资产类准则", desc: "IAS 16, 38, 40, 36, 23, 2, 41, IFRS 5" },
+            [cite_start]{ id: "Ch4", group: 1, label: "Ch4: 资产类准则", desc: "IAS 16, 38, 40, 36, 23, 2, 41, IFRS 5 [cite: 315]" },
             
             // IAS 16 PPE
-            { id: "IAS16", group: 2, label: "IAS 16 PPE", parent: "Ch4", desc: "固定资产。初始计量：Cost (含直接归属费用，拆除成本)。" },
-            { id: "Depreciation", group: 3, label: "折旧", parent: "IAS16", desc: "开始：Ready for use。闲置：继续折旧。方法：直线法/余额递减法。" },
-            { id: "Revaluation", group: 3, label: "重估模型", parent: "IAS16", desc: "增值记 OCI/RS。减值先抵减 RS 再进 SPL。每年需转移多余折旧(RS -> RE)。" },
-            { id: "Case_Elite", group: 4, label: "案例: Elite Co", parent: "IAS16", desc: "【教材例题】\n邮轮组件拆分折旧。\nShip fabric (25y), Fittings (12y), Propulsion (40k hours).\n更换推进系统时，旧系统剩余价值需 derecognize，新成本 capitalize。" },
+            [cite_start]{ id: "IAS16", group: 2, label: "IAS 16 PPE", parent: "Ch4", desc: "固定资产。初始计量：Cost (含直接归属费用，拆除成本) [cite: 334]。" },
+            [cite_start]{ id: "Depreciation", group: 3, label: "折旧", parent: "IAS16", desc: "开始：Ready for use。闲置：继续折旧。方法：直线法/余额递减法 [cite: 367, 382]。" },
+            [cite_start]{ id: "Revaluation", group: 3, label: "重估模型", parent: "IAS16", desc: "增值记 OCI/RS。减值先抵减 RS 再进 SPL。每年需转移多余折旧(RS -> RE) [cite: 389, 427, 428]。" },
+            [cite_start]{ id: "Case_Elite", group: 4, label: "案例: Elite Co", parent: "IAS16", desc: "【教材例题 [cite: 449]】\n邮轮组件拆分折旧。\nShip fabric (25y), Fittings (12y), Propulsion (40k hours).\n更换推进系统时，旧系统剩余价值需 derecognize，新成本 capitalize。" },
+            
+            // *** NEW CASE: Topsy Co (Revaluation) ***
+            { id: "Case_Topsy", group: 4, label: "案例: Topsy Co (重估)", parent: "Revaluation", desc: "【重估盈余余额计算】\n\n1. 期初 RS: $705,000\n\n2. 建筑物调整 (多余折旧转移):\n折旧(重估后): $1.5m/50y = $30k\n折旧(成本): $750k/50y = $15k\n转移金额: ($15,000) (RS -> RE)\n\n3. 土地调整 (新重估增值):\n新FV $950k - 成本 $800k = +$150,000 (计入 RS)\n\n4. 期末 RS 余额:\n$705k - $15k + $150k = $840,000" },
 
             // IAS 38 Intangible
-            { id: "IAS38", group: 2, label: "IAS 38 无形资产", parent: "Ch4", desc: "无实体、可辨认、非货币性资产。" },
-            { id: "RD", group: 3, label: "R&D (研发)", parent: "IAS38", desc: "Research: Expense.\nDevelopment: Capitalize if PIRATE criteria met." },
-            { id: "Case_Assoria", group: 4, label: "案例: Assoria Co", parent: "IAS38", desc: "【教材例题】\n计算研发费用摊销。\nResearch cost ($1.4m) -> SPL.\nDev cost ($0.8m/mo) -> Capitalize from confident date." },
+            [cite_start]{ id: "IAS38", group: 2, label: "IAS 38 无形资产", parent: "Ch4", desc: "无实体、可辨认、非货币性资产 [cite: 493]。" },
+            [cite_start]{ id: "RD", group: 3, label: "R&D (研发)", parent: "IAS38", desc: "Research: Expense.\nDevelopment: Capitalize if PIRATE criteria met [cite: 513-520]。" },
+            [cite_start]{ id: "Case_Assoria", group: 4, label: "案例: Assoria Co", parent: "IAS38", desc: "【教材例题 [cite: 567]】\n计算研发费用摊销。\nResearch cost ($1.4m) -> SPL.\nDev cost ($0.8m/mo) -> Capitalize from confident date." },
 
             // IAS 40 Investment Property
-            { id: "IAS40", group: 2, label: "IAS 40 投资性房地产", parent: "Ch4", desc: "赚租金或资本增值。Fair Value Model (变动进 SPL，不折旧) vs Cost Model。" },
-            { id: "Case_Carter", group: 4, label: "案例: Carter Co", parent: "IAS40", desc: "【教材例题】\nOwner-occupied 转 Investment Property。\n转换日先重估至 FV (Gain -> OCI)，之后按 IAS 40 处理。" },
+            [cite_start]{ id: "IAS40", group: 2, label: "IAS 40 投资性房地产", parent: "Ch4", desc: "赚租金或资本增值。Fair Value Model (变动进 SPL，不折旧) vs Cost Model [cite: 589, 615]。" },
+            [cite_start]{ id: "Case_Carter", group: 4, label: "案例: Carter Co", parent: "IAS40", desc: "【教材例题 [cite: 670]】\nOwner-occupied 转 Investment Property。\n转换日先重估至 FV (Gain -> OCI)，之后按 IAS 40 处理。" },
 
             // IAS 36 Impairment
-            { id: "IAS36", group: 2, label: "IAS 36 资产减值", parent: "Ch4", desc: "Carrying Amount > Recoverable Amount.\nRA = Higher of (FV-CTS, VIU)。" },
-            { id: "CGU", group: 3, label: "CGU (现金产出单元)", parent: "IAS36", desc: "减值分摊顺序：1. Specific asset damage 2. Goodwill 3. Pro-rata other assets." },
-            { id: "Case_Riley", group: 4, label: "案例: Riley Co", parent: "IAS36", desc: "【教材例题】\n计算 Impairment Loss。\nNBV=$50k. FV-CTS=$30k. VIU=$31,875 (Cashflows discounted).\nRecoverable amount = $31,875.\nImpairment = $18,125." },
+            [cite_start]{ id: "IAS36", group: 2, label: "IAS 36 资产减值", parent: "Ch4", desc: "Carrying Amount > Recoverable Amount.\nRA = Higher of (FV-CTS, VIU) [cite: 700]。" },
+            { id: "CGU", group: 3, label: "CGU (现金产出单元)", parent: "IAS36", desc: "减值分摊顺序：1. [cite_start]Specific asset damage 2. Goodwill 3. Pro-rata other assets [cite: 717]。" },
+            [cite_start]{ id: "Case_Riley", group: 4, label: "案例: Riley Co", parent: "IAS36", desc: "【教材例题 [cite: 744]】\n计算 Impairment Loss。\nNBV=$50k. FV-CTS=$30k. VIU=$31,875 (Cashflows discounted).\nRecoverable amount = $31,875.\nImpairment = $18,125." },
 
             // IAS 23 Borrowing Costs
-            { id: "IAS23", group: 2, label: "IAS 23 借款费用", parent: "Ch4", desc: "Qualifying Asset (建造期长)。资本化利息 = 实际发生 - 临时投资收益。" },
-            { id: "Case_Fido", group: 4, label: "案例: Fido Co", parent: "IAS23", desc: "【教材例题】\n一般借款加权平均利率计算。\nLoan A (10%) & Loan B (8%).\nWACC calculation for capitalization rate." },
+            [cite_start]{ id: "IAS23", group: 2, label: "IAS 23 借款费用", parent: "Ch4", desc: "Qualifying Asset (建造期长)。资本化利息 = 实际发生 - 临时投资收益 [cite: 799, 819]。" },
+            [cite_start]{ id: "Case_Fido", group: 4, label: "案例: Fido Co", parent: "IAS23", desc: "【教材例题 [cite: 830]】\n一般借款加权平均利率计算。\nLoan A (10%) & Loan B (8%).\nWACC calculation for capitalization rate." },
 
             // IAS 2 Inventory
-            { id: "IAS2", group: 2, label: "IAS 2 存货", parent: "Ch4", desc: "Lower of Cost and NRV (Net Realizable Value)。" },
-            { id: "Case_Litch", group: 4, label: "案例: Litch Co", parent: "IAS2", desc: "【教材例题】\nWIP valuation.\nCost $14,900. NRV = Selling price - Completion cost - Selling cost." },
+            [cite_start]{ id: "IAS2", group: 2, label: "IAS 2 存货", parent: "Ch4", desc: "Lower of Cost and NRV (Net Realizable Value) [cite: 867]。" },
+            [cite_start]{ id: "Case_Litch", group: 4, label: "案例: Litch Co", parent: "IAS2", desc: "【教材例题 [cite: 913]】\nWIP valuation.\nCost $14,900. NRV = Selling price - Completion cost - Selling cost." },
 
             // IFRS 5 Held for Sale
-            { id: "IFRS5", group: 2, label: "IFRS 5 持有待售", parent: "Ch4", desc: "条件：Available for immediate sale, Highly probable, <1 year。\n计量：Lower of CA and FV-CTS。停止折旧。" },
+            [cite_start]{ id: "IFRS5", group: 2, label: "IFRS 5 持有待售", parent: "Ch4", desc: "条件：Available for immediate sale, Highly probable, <1 year。\n计量：Lower of CA and FV-CTS。停止折旧 [cite: 946, 954]。" },
 
             // IAS 41 Agriculture
-            { id: "IAS41", group: 2, label: "IAS 41 农业", parent: "Ch4", desc: "生物资产：FV - CTS (变动进 SPL)。\n收获农产品：Harvest 时 FV - CTS 转为 Inventory Cost。" },
-            { id: "Case_Shaw", group: 4, label: "案例: Shaw Co", parent: "IAS41", desc: "【教材例题】\n羊群估值。\nYear end measure at FV ($480k) less commission (4%). Gain to SPL." },
+            [cite_start]{ id: "IAS41", group: 2, label: "IAS 41 农业", parent: "Ch4", desc: "生物资产：FV - CTS (变动进 SPL)。\n收获农产品：Harvest 时 FV - CTS 转为 Inventory Cost [cite: 1029]。" },
+            [cite_start]{ id: "Case_Shaw", group: 4, label: "案例: Shaw Co", parent: "IAS41", desc: "【教材例题 [cite: 1044]】\n羊群估值。\nYear end measure at FV ($480k) less commission (4%). Gain to SPL." },
 
             // --- Chapter 5: Leases ---
-            { id: "Ch5", group: 1, label: "Ch5: 租赁 (IFRS 16)", desc: "Lessee Accounting" },
-            { id: "ROU_Liab", group: 2, label: "ROU Asset & Liability", parent: "Ch5", desc: "Asset: Cost model. Liability: PV of lease payments." },
-            { id: "Exemptions", group: 3, label: "豁免情况", parent: "Ch5", desc: "Short-term (<12m) & Low value assets -> Expense straight line." },
-            { id: "Case_Pebworth", group: 4, label: "案例: Pebworth Co", parent: "Ch5", desc: "【教材例题】\n计算 SPL Charge (Depn + Interest)。\nLiab Opening $15.4m. Interest 8%.\nDepn over shorter of lease term or useful life (if no transfer)." },
+            [cite_start]{ id: "Ch5", group: 1, label: "Ch5: 租赁 (IFRS 16)", desc: "Lessee Accounting [cite: 1072]" },
+            { id: "ROU_Liab", group: 2, label: "ROU Asset & Liability", parent: "Ch5", desc: "Asset: Cost model. [cite_start]Liability: PV of lease payments [cite: 1093, 1098]。" },
+            [cite_start]{ id: "Exemptions", group: 3, label: "豁免情况", parent: "Ch5", desc: "Short-term (<12m) & Low value assets -> Expense straight line [cite: 1089]。" },
+            [cite_start]{ id: "Case_Pebworth", group: 4, label: "案例: Pebworth Co", parent: "Ch5", desc: "【教材例题 [cite: 1186]】\n计算 SPL Charge (Depn + Interest)。\nLiab Opening $15.4m. Interest 8%.\nDepn over shorter of lease term or useful life (if no transfer)." },
 
             // --- Chapter 6: Provisions ---
-            { id: "Ch6", group: 1, label: "Ch6: 预计负债 (IAS 37)", desc: "Provision, Contingent Liability/Asset" },
-            { id: "Criteria", group: 2, label: "确认条件", parent: "Ch6", desc: "1. Present Obligation (Legal/Constructive)\n2. Probable outflow\n3. Reliable estimate." },
-            { id: "Case_Onerous", group: 4, label: "亏损合同/重组", parent: "Ch6", desc: "Onerous Contract: Lower of cost to fulfill and penalty.\nRestructuring: Must have detailed plan & raised valid expectation." },
+            [cite_start]{ id: "Ch6", group: 1, label: "Ch6: 预计负债 (IAS 37)", desc: "Provision, Contingent Liability/Asset [cite: 1217]" },
+            { id: "Criteria", group: 2, label: "确认条件", parent: "Ch6", desc: "1. Present Obligation (Legal/Constructive)\n2. Probable outflow\n3. [cite_start]Reliable estimate [cite: 1222]。" },
+            [cite_start]{ id: "Case_Onerous", group: 4, label: "亏损合同/重组", parent: "Ch6", desc: "Onerous Contract: Lower of cost to fulfill and penalty.\nRestructuring: Must have detailed plan & raised valid expectation [cite: 1242]。" },
 
             // --- Chapter 7: Tax ---
-            { id: "Ch7", group: 1, label: "Ch7: 所得税 (IAS 12)", desc: "Current Tax & Deferred Tax" },
-            { id: "DeferredTax", group: 2, label: "递延所得税", parent: "Ch7", desc: "Temporary Difference (Carrying Amount vs Tax Base) * Rate." },
-            { id: "DT_Logic", group: 3, label: "DTL/DTA 计算", parent: "DeferredTax", desc: "DTL = (CA > TB) * Rate. 计入 Tax Expense (除非源于 Revaluation -> OCI)。" },
+            [cite_start]{ id: "Ch7", group: 1, label: "Ch7: 所得税 (IAS 12)", desc: "Current Tax & Deferred Tax [cite: 1293]" },
+            [cite_start]{ id: "DeferredTax", group: 2, label: "递延所得税", parent: "Ch7", desc: "Temporary Difference (Carrying Amount vs Tax Base) * Rate [cite: 1316]。" },
+            { id: "DT_Logic", group: 3, label: "DTL/DTA 计算", parent: "DeferredTax", desc: "DTL = (CA > TB) * Rate. [cite_start]计入 Tax Expense (除非源于 Revaluation -> OCI) [cite: 1326]。" },
 
             // --- Chapter 8: Financial Instruments ---
-            { id: "Ch8", group: 1, label: "Ch8: 金融工具", desc: "IFRS 9, IAS 32" },
-            { id: "FinAsset", group: 2, label: "金融资产", parent: "Ch8", desc: "Debt: Amortized Cost (if BM is collect). Equity: FVTPL (default) or FVTOCI (election)." },
-            { id: "FinLiab", group: 2, label: "金融负债", parent: "Ch8", desc: "Amortized Cost (Effective Interest Rate method)。" },
-            { id: "Compound", group: 2, label: "混合工具 (可转债)", parent: "Ch8", desc: "Split Accounting。\n1. PV of principal+interest (Liability)\n2. Residual (Equity/Option)." },
-            { id: "Case_Tenfold", group: 4, label: "案例: Tenfold Co", parent: "FinAsset", desc: "【教材例题】\nAmortized Cost calculation.\nInitial FV + Transaction costs.\nYear end = Open + EIR Interest - Coupon Received." },
+            [cite_start]{ id: "Ch8", group: 1, label: "Ch8: 金融工具", desc: "IFRS 9, IAS 32 [cite: 1417]" },
+            { id: "FinAsset", group: 2, label: "金融资产", parent: "Ch8", desc: "Debt: Amortized Cost (if BM is collect). [cite_start]Equity: FVTPL (default) or FVTOCI (election) [cite: 1424, 1441, 1446]。" },
+            [cite_start]{ id: "FinLiab", group: 2, label: "金融负债", parent: "Ch8", desc: "Amortized Cost (Effective Interest Rate method) [cite: 1459]。" },
+            { id: "Compound", group: 2, label: "混合工具 (可转债)", parent: "Ch8", desc: "Split Accounting。\n1. PV of principal+interest (Liability)\n2. [cite_start]Residual (Equity/Option) [cite: 1469]。" },
+            [cite_start]{ id: "Case_Tenfold", group: 4, label: "案例: Tenfold Co", parent: "FinAsset", desc: "【教材例题 [cite: 1491]】\nAmortized Cost calculation.\nInitial FV + Transaction costs.\nYear end = Open + EIR Interest - Coupon Received." },
 
             // --- Chapter 9: Revenue ---
-            { id: "Ch9", group: 1, label: "Ch9: 收入 (IFRS 15)", desc: "5-Step Model" },
-            { id: "Steps", group: 2, label: "五步法", parent: "Ch9", desc: "1.Contract 2.Performance Obligations 3.Price 4.Allocate Price 5.Recognize when satisfied." },
-            { id: "Construction", group: 3, label: "建造合同", parent: "Ch9", desc: "按完工百分比确认收入 (Input/Output method)。\n亏损合同立即确认全部损失。" },
-            { id: "Case_Quincy", group: 4, label: "案例: Quincy (售后服务)", parent: "Ch9", desc: "【教材例题】\nSale with service ($10m).\nProduct revenue recognized at point.\nService revenue deferred and recognized over time." },
+            [cite_start]{ id: "Ch9", group: 1, label: "Ch9: 收入 (IFRS 15)", desc: "5-Step Model [cite: 1537]" },
+            [cite_start]{ id: "Steps", group: 2, label: "五步法", parent: "Ch9", desc: "1.Contract 2.Performance Obligations 3.Price 4.Allocate Price 5.Recognize when satisfied [cite: 1554]。" },
+            [cite_start]{ id: "Construction", group: 3, label: "建造合同", parent: "Ch9", desc: "按完工百分比确认收入 (Input/Output method)。\n亏损合同立即确认全部损失 [cite: 1587]。" },
+            [cite_start]{ id: "Case_Quincy", group: 4, label: "案例: Quincy (售后服务)", parent: "Ch9", desc: "【教材例题 [cite: 1577]】\nSale with service ($10m).\nProduct revenue recognized at point.\nService revenue deferred and recognized over time." },
 
             // --- Chapter 10: EPS ---
-            { id: "Ch10", group: 1, label: "Ch10: 每股收益 (IAS 33)", desc: "Basic & Diluted EPS" },
-            { id: "BasicEPS", group: 2, label: "Basic EPS", parent: "Ch10", desc: "Earnings / WANS.\nBonus Issue: 视同这就存在 (Restate prior yr).\nRights Issue: Calculate TERP." },
-            { id: "DilutedEPS", group: 2, label: "Diluted EPS", parent: "Ch10", desc: "Adjust earnings for interest saving (post-tax).\nAdjust shares for max potential conversion." },
+            [cite_start]{ id: "Ch10", group: 1, label: "Ch10: 每股收益 (IAS 33)", desc: "Basic & Diluted EPS [cite: 1800]" },
+            [cite_start]{ id: "BasicEPS", group: 2, label: "Basic EPS", parent: "Ch10", desc: "Earnings / WANS.\nBonus Issue: 视同这就存在 (Restate prior yr).\nRights Issue: Calculate TERP [cite: 1801]。" },
+            [cite_start]{ id: "DilutedEPS", group: 2, label: "Diluted EPS", parent: "Ch10", desc: "Adjust earnings for interest saving (post-tax).\nAdjust shares for max potential conversion [cite: 1803]。" },
 
             // --- Chapter 11: Presentation ---
-            { id: "Ch11", group: 1, label: "Ch11: 列报准则", desc: "IAS 8, 10, 21, IFRS 13" },
-            { id: "IAS10", group: 2, label: "IAS 10 期后事项", parent: "Ch11", desc: "Adjusting (e.g., Customer bankruptcy confirming bad debt) vs Non-adjusting (e.g., Fire after YE)." },
-            { id: "IAS21", group: 2, label: "IAS 21 外汇", parent: "Ch11", desc: "Monetary items: Retranslate at YE spot rate (Gain/Loss -> SPL).\nNon-monetary: Historical rate." },
-            { id: "Case_Jeffers", group: 4, label: "案例: Jeffers Co", parent: "IAS10", desc: "【教材例题】\nEvents analysis:\n1. Fine confirmed (Adjusting)\n2. Customer bankrupt (Adjusting)\n3. Acquisition finalized (Non-adjusting)." },
+            [cite_start]{ id: "Ch11", group: 1, label: "Ch11: 列报准则", desc: "IAS 8, 10, 21, IFRS 13 [cite: 1812]" },
+            [cite_start]{ id: "IAS10", group: 2, label: "IAS 10 期后事项", parent: "Ch11", desc: "Adjusting (e.g., Customer bankruptcy confirming bad debt) vs Non-adjusting (e.g., Fire after YE) [cite: 1830]。" },
+            [cite_start]{ id: "IAS21", group: 2, label: "IAS 21 外汇", parent: "Ch11", desc: "Monetary items: Retranslate at YE spot rate (Gain/Loss -> SPL).\nNon-monetary: Historical rate [cite: 1849]。" },
+            [cite_start]{ id: "Case_Jeffers", group: 4, label: "案例: Jeffers Co", parent: "IAS10", desc: "【教材例题 [cite: 1835]】\nEvents analysis:\n1. Fine confirmed (Adjusting)\n2. Customer bankrupt (Adjusting)\n3. Acquisition finalized (Non-adjusting)." },
 
             // --- Chapter 12: Single Entity FS ---
-            { id: "Ch12", group: 1, label: "Ch12: 单体报表编制", desc: "从 Trial Balance 编制 SOFP/SPL" },
-            { id: "Technique", group: 2, label: "编制技巧", parent: "Ch12", desc: "注意 Cost of Sales 计算 (Op Inv + Purch - Cl Inv).\n注意 Admin Exp 与 Distribution Exp 分类。" },
+            [cite_start]{ id: "Ch12", group: 1, label: "Ch12: 单体报表编制", desc: "从 Trial Balance 编制 SOFP/SPL [cite: 1863]" },
+            [cite_start]{ id: "Technique", group: 2, label: "编制技巧", parent: "Ch12", desc: "注意 Cost of Sales 计算 (Op Inv + Purch - Cl Inv).\n注意 Admin Exp 与 Distribution Exp 分类 [cite: 1872]。" },
 
             // --- Chapter 13: Cash Flows ---
-            { id: "Ch13", group: 1, label: "Ch13: 现金流量表 (IAS 7)", desc: "Indirect Method" },
-            { id: "Operating", group: 2, label: "经营活动", parent: "Ch13", desc: "PBIT + Non-cash (Depn) +/- Working Capital changes - Interest - Tax." },
-            { id: "Investing", group: 2, label: "投资活动", parent: "Ch13", desc: "Purchase/Sale of NCA, Interest Received." },
-            { id: "Financing", group: 2, label: "融资活动", parent: "Ch13", desc: "Share issue, Loan repayment, Dividend paid." },
+            [cite_start]{ id: "Ch13", group: 1, label: "Ch13: 现金流量表 (IAS 7)", desc: "Indirect Method [cite: 1874]" },
+            [cite_start]{ id: "Operating", group: 2, label: "经营活动", parent: "Ch13", desc: "PBIT + Non-cash (Depn) +/- Working Capital changes - Interest - Tax [cite: 1878]。" },
+            [cite_start]{ id: "Investing", group: 2, label: "投资活动", parent: "Ch13", desc: "Purchase/Sale of NCA, Interest Received [cite: 1876]。" },
+            [cite_start]{ id: "Financing", group: 2, label: "融资活动", parent: "Ch13", desc: "Share issue, Loan repayment, Dividend paid [cite: 1876]。" },
 
             // --- Chapter 14: Ratios ---
-            { id: "Ch14", group: 1, label: "Ch14: 财报分析", desc: "Performance & Position" },
-            { id: "Ratios", group: 2, label: "关键比率", parent: "Ch14", desc: "ROCE, Gearing, Current Ratio, Inventory Days, Receivable Days." },
+            [cite_start]{ id: "Ch14", group: 1, label: "Ch14: 财报分析", desc: "Performance & Position [cite: 1891]" },
+            [cite_start]{ id: "Ratios", group: 2, label: "关键比率", parent: "Ch14", desc: "ROCE, Gearing, Current Ratio, Inventory Days, Receivable Days [cite: 1892]。" },
 
             // --- Chapter 15 & 16: Consolidation ---
-            { id: "Ch15_16", group: 1, label: "Ch15-16: 合并报表", desc: "IFRS 10, IFRS 3" },
-            { id: "W1_W5", group: 2, label: "五步法 (SOFP)", parent: "Ch15_16", desc: "W1: Group Structure/Cost.\nW2: Net Assets of Sub.\nW3: Goodwill.\nW4: NCI.\nW5: Group RE." },
-            { id: "PURP", group: 3, label: "PURP (未实现利润)", parent: "Ch15_16", desc: "Inventory PURP.\nSeller = Parent: Dr RE(P), Cr Inv.\nSeller = Sub: Dr RE(S), Cr Inv (Impacts NCI)." },
-            { id: "Goodwill_Calc", group: 3, label: "商誉计算", parent: "Ch15_16", desc: "Cost of Inv + FV of NCI - FV of Net Assets.\nNegative Goodwill -> Gain in SPL." },
-            { id: "Associates", group: 3, label: "联营公司 (IAS 28)", parent: "Ch15_16", desc: "Equity Accounting.\nSOFP: Cost + Share of Post-Acq Profit - Div.\nSPL: Share of Profit." },
-            { id: "Case_Golden", group: 4, label: "案例: Golden Co", parent: "Ch15_16", desc: "【教材例题】\n处置子公司 (Disposal)。\nGroup Gain = Proceeds + FV retained interest - (Net Assets + Goodwill)." }
+            [cite_start]{ id: "Ch15_16", group: 1, label: "Ch15-16: 合并报表", desc: "IFRS 10, IFRS 3 [cite: 1913, 1924]" },
+            [cite_start]{ id: "W1_W5", group: 2, label: "五步法 (SOFP)", parent: "Ch15_16", desc: "W1: Group Structure/Cost.\nW2: Net Assets of Sub.\nW3: Goodwill.\nW4: NCI.\nW5: Group RE [cite: 1940]。" },
+            [cite_start]{ id: "PURP", group: 3, label: "PURP (未实现利润)", parent: "Ch15_16", desc: "Inventory PURP.\nSeller = Parent: Dr RE(P), Cr Inv.\nSeller = Sub: Dr RE(S), Cr Inv (Impacts NCI) [cite: 1975]。" },
+            [cite_start]{ id: "Goodwill_Calc", group: 3, label: "商誉计算", parent: "Ch15_16", desc: "Cost of Inv + FV of NCI - FV of Net Assets.\nNegative Goodwill -> Gain in SPL [cite: 1933]。" },
+            [cite_start]{ id: "Associates", group: 3, label: "联营公司 (IAS 28)", parent: "Ch15_16", desc: "Equity Accounting.\nSOFP: Cost + Share of Post-Acq Profit - Div.\nSPL: Share of Profit [cite: 1992]。" },
+            [cite_start]{ id: "Case_Golden", group: 4, label: "案例: Golden Co", parent: "Ch15_16", desc: "【教材例题 [cite: 1989]】\n处置子公司 (Disposal)。\nGroup Gain = Proceeds + FV retained interest - (Net Assets + Goodwill)." }
         ],
         links: [
             // Link Logic: Parent -> Child
@@ -271,7 +274,11 @@
             // Ch3
             { source: "Ch3", target: "IFRS_S1" },
             // Ch4
-            { source: "Ch4", target: "IAS16" }, { source: "IAS16", target: "Depreciation" }, { source: "IAS16", target: "Revaluation" }, { source: "IAS16", target: "Case_Elite" },
+            { source: "Ch4", target: "IAS16" }, { source: "IAS16", target: "Depreciation" }, { source: "IAS16", target: "Revaluation" }, { source: "IAS16", target: "Case_Elite" }, 
+            
+            // *** New Link for Topsy Case ***
+            { source: "Revaluation", target: "Case_Topsy" },
+
             { source: "Ch4", target: "IAS38" }, { source: "IAS38", target: "RD" }, { source: "IAS38", target: "Case_Assoria" },
             { source: "Ch4", target: "IAS40" }, { source: "IAS40", target: "Case_Carter" },
             { source: "Ch4", target: "IAS36" }, { source: "IAS36", target: "CGU" }, { source: "IAS36", target: "Case_Riley" },
@@ -449,7 +456,7 @@
                     ${d.desc}
                 </div>
                 <p style="margin-top:10px; font-size:0.85rem; color:#94a3b8;">
-                    * 此案例来源于提供的电子教材，请结合上下文理解具体分录。
+                    * 此案例来源于提供的电子教材及练习题，请结合上下文理解具体分录。
                 </p>
             `;
         }
