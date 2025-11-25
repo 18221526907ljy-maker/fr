@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ACCA FR 终极逻辑图谱 (思维导图复刻版)</title>
+    <title>ACCA FR 终极全景图谱 (V2.0 考点融合版)</title>
     <script src="https://lib.baomitu.com/d3/7.8.5/d3.min.js"></script>
     <style>
         :root {
@@ -13,24 +13,20 @@
             --text-sub: #94a3b8;
             --border-color: #334155;
             
-            /* 六大模块配色 (对应思维导图色块) */
-            --c-frame: #ef4444;   /* 概念监管 */
-            --c-asset: #f59e0b;   /* 资产 */
-            --c-liab: #10b981;    /* 负债权益 */
-            --c-perf: #06b6d4;    /* 绩效收入 */
-            --c-consol: #8b5cf6;  /* 合并报表 */
-            --c-analy: #ec4899;   /* 分析 */
-            --c-case: #64748b;    /* 案例 */
+            /* 模块颜色 */
+            --c-frame: #ef4444; --c-asset: #f59e0b; --c-liab: #10b981;
+            --c-perf: #06b6d4; --c-consol: #8b5cf6; --c-analy: #ec4899; --c-case: #64748b;
+            --c-highlight: #f43f5e; /* 重点高亮色 */
+            --c-mem: #fbbf24; /* 背诵高亮色 */
         }
 
         body { margin: 0; overflow: hidden; background: var(--bg-color); color: var(--text-main); font-family: 'Segoe UI', sans-serif; }
         #container { display: flex; width: 100vw; height: 100vh; }
-        #graph-area { flex: 1; position: relative; background: radial-gradient(circle at center, #1e293b 0%, #020617 100%); }
+        #graph-area { flex: 1; position: relative; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); }
 
-        /* 侧边栏 (加宽以容纳逻辑表) */
+        /* 侧边栏 */
         #sidebar {
-            width: 600px; 
-            background: var(--sidebar-bg); border-left: 1px solid var(--border-color);
+            width: 600px; background: var(--sidebar-bg); border-left: 1px solid var(--border-color);
             position: absolute; right: 0; top: 0; height: 100%;
             transform: translateX(100%); transition: transform 0.3s ease; z-index: 20;
             box-shadow: -10px 0 30px rgba(0,0,0,0.7); display: flex; flex-direction: column;
@@ -43,28 +39,21 @@
         h2 { margin: 0 0 10px 0; color: var(--text-main); border-bottom: 2px solid #334155; padding-bottom: 10px; font-size: 1.5rem; letter-spacing: 0.5px; }
         .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; margin-bottom: 10px; color: #000; text-transform: uppercase; }
 
-        /* --- 逻辑表格系统 (核心) --- */
+        /* --- 核心内容样式 --- */
+        .desc { line-height: 1.7; color: #cbd5e1; font-size: 0.95rem; white-space: pre-wrap; margin-bottom: 15px; }
+        .highlight { color: #f43f5e; font-weight: bold; background: rgba(244, 63, 94, 0.1); padding: 0 4px; border-radius: 3px; }
+        
+        .tag-exam { color: #f43f5e; font-weight: bold; background: rgba(244, 63, 94, 0.15); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(244, 63, 94, 0.3); margin-right: 5px; font-size: 0.85em; }
+        .tag-mem { color: #fbbf24; font-weight: bold; background: rgba(251, 191, 36, 0.15); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(251, 191, 36, 0.3); margin-right: 5px; font-size: 0.85em; }
+
+        /* 表格样式 */
         .info-table {
-            width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.9rem;
+            width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.85rem;
             background: rgba(0,0,0,0.2); border-radius: 6px; overflow: hidden; border: 1px solid #334155;
         }
-        .info-table th { background: rgba(56, 189, 248, 0.15); text-align: left; padding: 12px 10px; color: #38bdf8; font-weight: bold; border-bottom: 1px solid #475569; }
-        .info-table td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #e2e8f0; vertical-align: top; line-height: 1.5; }
-        .info-table tr:last-child td { border-bottom: none; }
-        .info-table tr:nth-child(even) { background: rgba(255,255,255,0.02); }
-        
-        /* 计算行样式 */
-        .calc-row td { font-family: 'Consolas', monospace; font-weight: bold; color: #fff; background: rgba(255,255,255,0.05); border-top: 1px double #64748b; }
-        
-        /* 逻辑树样式 */
-        .logic-tree { margin-left: 10px; border-left: 2px solid #475569; padding-left: 10px; color: #cbd5e1; }
-        .logic-item { margin-bottom: 8px; position: relative; }
-        .logic-item::before { content: "•"; color: #38bdf8; position: absolute; left: -15px; }
-
-        /* 详情文本 */
-        .desc { line-height: 1.7; color: #cbd5e1; font-size: 0.95rem; white-space: pre-wrap; }
-        .highlight { color: #f43f5e; font-weight: bold; background: rgba(244, 63, 94, 0.1); padding: 0 4px; border-radius: 3px; }
-        .formula { font-family: 'Consolas', monospace; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px; border: 1px dashed #475569; margin: 10px 0; color: #a5f3fc; }
+        .info-table th { background: rgba(56, 189, 248, 0.15); text-align: left; padding: 10px; color: #38bdf8; font-weight: bold; border-bottom: 1px solid #475569; }
+        .info-table td { padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #e2e8f0; vertical-align: top; line-height: 1.5; }
+        .calc-row td { font-family: monospace; font-weight: bold; color: #fff; background: rgba(255,255,255,0.05); border-top: 1px double #64748b; }
 
         /* 案例框 */
         .example-box { background: #0f172a; padding: 15px; border-left: 4px solid var(--c-case); border-radius: 6px; font-family: monospace; white-space: pre-wrap; color: #e2e8f0; font-size: 0.9rem; margin-top: 15px; border: 1px solid #334155; }
@@ -75,11 +64,9 @@
             display: flex; align-items: center; justify-content: center; width: 100%;
             background: linear-gradient(135deg, #dc2626, #991b1b); color: white; text-decoration: none;
             padding: 14px; border-radius: 8px; font-weight: bold; border: 1px solid #7f1d1d;
-            transition: all 0.2s; font-size: 1rem;
+            transition: all 0.2s;
         }
-        .pdf-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4); }
-
-        .close-btn { position: absolute; top: 15px; right: 15px; background: none; border: none; color: var(--text-sub); font-size: 2rem; cursor: pointer; }
+        .close-btn { position: absolute; top: 15px; right: 15px; background: none; border: none; color: var(--text-sub); font-size: 1.8rem; cursor: pointer; }
         
         /* 搜索 */
         #controls { position: absolute; top: 20px; left: 20px; background: rgba(15, 23, 42, 0.9); padding: 15px; border-radius: 12px; border: 1px solid var(--border-color); backdrop-filter: blur(10px); }
@@ -93,7 +80,7 @@
 <div id="container">
     <div id="graph-area">
         <div id="controls">
-            <input type="text" id="search" placeholder="🔍 搜索考点 (如: Lease)...">
+            <input type="text" id="search" placeholder="🔍 搜索考点...">
             <div style="margin-top:15px; border-top:1px solid #334155; padding-top:10px;">
                 <div class="legend-item"><div class="dot" style="background:var(--c-frame)"></div>概念与监管</div>
                 <div class="legend-item"><div class="dot" style="background:var(--c-asset)"></div>资产准则</div>
@@ -119,199 +106,107 @@
 </div>
 
 <script>
-    // --- 核心数据源 (集成思维导图逻辑细节) ---
+    // --- 核心数据源 (全功能终极整合) ---
     const nodes = [
-        { id: "Root", label: "ACCA FR 逻辑全图", group: 0, r: 50, page: 1, desc: "包含思维导图所有逻辑分支与细节" },
+        { id: "Root", label: "ACCA FR 知识全景", group: 0, r: 45, page: 1, desc: "包含所有考点、定义、计算格式" },
 
         // === 1. 概念与监管 (Framework) ===
         { id: "Mod_Frame", label: "概念与监管", group: 1, parent: "Root", page: 9 },
-        { id: "Qual", label: "质量特征", group: 1, parent: "Mod_Frame", page: 10, desc: `
-【🔥背过】特征层级：
-<div class="logic-tree">
-    <div class="logic-item"><strong>Fundamental (基础):</strong>
-        <br>- Relevance (相关性): 预测/证实价值
-        <br>- Faithful Representation (如实反映): 完整、中立、无误
-    </div>
-    <div class="logic-item"><strong>Enhancing (强化):</strong>
-        <br>- Comparability (可比性)
-        <br>- Verifiability (可验证性)
-        <br>- Timeliness (及时性)
-        <br>- Understandability (可理解性)
-    </div>
-</div>` },
-        { id: "Meas", label: "计量基础", group: 1, parent: "Mod_Frame", page: 13, desc: `
-<table class="info-table">
-    <tr><th>基础</th><th>定义</th><th>优缺点</th></tr>
-    <tr><td>Historical Cost</td><td>购买价+交易费</td><td>客观可靠 / 此时价值低估</td></tr>
-    <tr><td>Fair Value</td><td>市场脱手价 (Exit)</td><td>反映现值 / 主观性</td></tr>
-    <tr><td>Value in Use</td><td>现金流折现 (Entity specific)</td><td>反映持有价值 / 复杂</td></tr>
-    <tr><td>Current Cost</td><td>重置成本 (Entry)</td><td>重置参考 / 难以确定</td></tr>
-</table>` },
-
+        { id: "Qual", label: "质量特征", group: 1, parent: "Mod_Frame", page: 10, desc: "【🔥背过】\n● **Fundamental:** Relevance, Faithful Rep (Complete, Neutral, Free from error).\n● **Enhancing:** Comparability, Verifiability, Timeliness, Understandability." },
+        { id: "Meas", label: "计量基础", group: 1, parent: "Mod_Frame", page: 13, desc: "【🔥背过】FV (Exit price), VIU (PV of CF), Historical Cost." },
+        { id: "S1", label: "IFRS S1 可持续", group: 1, parent: "Mod_Frame", page: 19, desc: "核心披露：Governance, Strategy, Risk, Metrics." },
+        { id: "NFP", label: "非营利组织 (NFP)", group: 1, parent: "Mod_Frame", page: 21, desc: "【⚡考点】NFP 绩效衡量基于 **3E 原则** (Economy, Efficiency, Effectiveness)。" },
+        
         // === 2. 资产 (Assets) ===
         { id: "Mod_Asset", label: "资产准则", group: 2, parent: "Root", page: 23 },
         
         // IAS 16
         { id: "IAS16", label: "IAS 16 固定资产", group: 2, parent: "Mod_Asset", page: 23 },
-        { id: "IAS16_Logic", label: "处理逻辑树", group: 2, parent: "IAS16", page: 24, desc: `
-<div class="logic-tree">
-    <div class="logic-item"><strong>Initial Measurement:</strong> Cost (Purchase + Direct costs + Dismantling PV)</div>
-    <div class="logic-item"><strong>Subsequent Measurement:</strong>
-        <br>1. <strong>Cost Model:</strong> Cost - Acc Depn - Impairment
-        <br>2. <strong>Revaluation Model:</strong> Fair Value
-        <br>&nbsp;&nbsp;-> Gain: OCI -> Revaluation Surplus (Equity)
-        <br>&nbsp;&nbsp;-> Loss: Dr RS (if any) -> Dr SPL
-    </div>
-    <div class="logic-item"><strong>Depreciation:</strong> Start when "Ready for use".</div>
-</div>` },
-        { id: "Case_Topsy", label: "案例: Topsy Co", group: 7, parent: "IAS16_Logic", page: 25, desc: "【重估盈余计算】\n期初 RS + 本期增值 - 多余折旧转移 = 期末 RS。\n多余折旧 = (重估后折旧 - 历史成本折旧)。" },
-
-        // IAS 38
-        { id: "IAS38", label: "IAS 38 无形资产", group: 2, parent: "Mod_Asset", page: 30 },
-        { id: "RD_Logic", label: "R&D 判别逻辑", group: 2, parent: "IAS38", page: 31, desc: `
+        { id: "IAS16_Cost", label: "成本构成", group: 2, parent: "IAS16", page: 24, desc: `
+【⚡考点】初始成本判定 (Item 6):
 <table class="info-table">
-    <tr><th>阶段</th><th>处理</th><th>关键点</th></tr>
-    <tr><td>Research</td><td>Expense (SPL)</td><td>探索性、不确定性</td></tr>
-    <tr><td>Development</td><td>Capitalize (SOFP)</td><td>必须满足 <strong>PIRATE</strong> 条件</td></tr>
-</table>
-<div class="formula">
-P - Probable future benefits
-I - Intention to complete/sell
-R - Resources available
-A - Ability to use/sell
-T - Technical feasibility
-E - Expenditure reliably measured
-</div>` },
-
-        // IAS 40
-        { id: "IAS40", label: "IAS 40 投资房产", group: 2, parent: "Mod_Asset", page: 35, desc: "【⚡考点】用途改变 (Change in use) 是重分类的前提。\nFair Value Model 变动进 **SPL**，且 **不折旧**。" },
-
-        // IAS 36
-        { id: "IAS36", label: "IAS 36 减值", group: 2, parent: "Mod_Asset", page: 39 },
-        { id: "Imp_Logic", label: "减值逻辑", group: 2, parent: "IAS36", page: 40, desc: `
-1. 比较: Carrying Amount vs Recoverable Amount
-2. **RA = Max (FV - CTS, VIU)**
-3. 分摊 (CGU):
-<table class="info-table">
-    <tr><th>顺序</th><th>对象</th></tr>
-    <tr><td>1</td><td>Specific Asset (明显受损)</td></tr>
-    <tr><td>2</td><td>Goodwill (全额抵减)</td></tr>
-    <tr><td>3</td><td>Pro-rata (其他资产)</td></tr>
+    <tr><th>包含 (Capitalize)</th><th>不包含 (Expense)</th></tr>
+    <tr><td>Purchase Price, Import duties</td><td>Administration overheads</td></tr>
+    <tr><td>Testing, Dismantling (PV)</td><td>**Staff training costs**</td></tr>
+    <tr><td>Site prep / Installation</td><td>**Initial Operating Losses**</td></tr>
 </table>` },
+        { id: "IAS16_Depn", label: "折旧/重估规则", group: 2, parent: "IAS16", page: 25, desc: "【⚡考点】折旧始于 **Ready for use**。闲置仍需折旧。\n重估增值进 **OCI (RS)**。多余折旧 **RS -> RE**。" },
 
-        // IAS 20 & 23
-        { id: "IAS20", label: "IAS 20 政府补贴", group: 2, parent: "Mod_Asset", page: 95, desc: "Asset grant: 抵减资产成本 或 确认为递延收入 (Deferred Income)。" },
-        { id: "IAS23", label: "IAS 23 借款费用", group: 2, parent: "Mod_Asset", page: 44, desc: "资本化开始: Expenditure + Borrowing costs + Activities start.\n暂停: Active development suspended.\n停止: Substantially complete." },
+        // IAS 38 & 40
+        { id: "IAS38", label: "IAS 38 无形资产", group: 2, parent: "Mod_Asset", page: 30, desc: "R&D: Research=Exp, Dev=Cap (PIRATE).\nAmortization: Finite life. Impairment: Indefinite life (Annually)." },
+        { id: "IAS40", label: "IAS 40 投资房产", group: 2, parent: "Mod_Asset", page: 35, desc: "FV Model: 变动进 **SPL**。**不折旧**。" },
+
+        // IAS 36 & IFRS 5
+        { id: "IAS36", label: "IAS 36 减值", group: 2, parent: "Mod_Asset", page: 39 },
+        { id: "Imp_Test", label: "减值测试", group: 2, parent: "IAS36", page: 40, desc: "【🔥背过】RA = Max(FV-CTS, VIU).\n强制测试: Goodwill & Indefinite Intangibles (Annually)." },
+        { id: "IFRS5", label: "IFRS 5 持有待售", group: 2, parent: "Mod_Asset", page: 50, desc: "【🔥背过】\n确认: Available immediately + Highly probable.\n计量: Lower of CA and FV-CTS.\n**停止折旧**。" },
+        { id: "HFS_Trap", label: "HFS 考点陷阱", group: 2, parent: "IFRS5", page: 50, desc: "【⚡陷阱】\n1. **不可立即出售:** (如需拆除/改造) $\rightarrow$ 失败。\n2. **转列两步法 (Item 8):** 先计提折旧 (SPL)，再进行重估/减值 (SPL/RS)。" },
 
         // === 3. 负债与权益 (Liab) ===
         { id: "Mod_Liab", label: "负债与权益", group: 3, parent: "Root", page: 57 },
         
-        // IFRS 9 (逻辑细化)
+        // IFRS 9 & IAS 32 (Item 9)
         { id: "IFRS9", label: "IFRS 9 金融工具", group: 3, parent: "Mod_Liab", page: 77 },
-        { id: "Fin_Class", label: "资产分类逻辑", group: 3, parent: "IFRS9", page: 78, desc: `
-<table class="info-table">
-    <tr><th>工具类型</th><th>测试 (Test)</th><th>分类</th><th>变动计入</th></tr>
-    <tr><td rowspan="3">Debt (债权)</td><td>BM: Collect<br>CF: SPPI</td><td>Amortized Cost</td><td>SPL (EIR)</td></tr>
-    <tr><td>BM: Collect & Sell<br>CF: SPPI</td><td>FVTOCI</td><td>OCI (可重分类)</td></tr>
-    <tr><td>Other</td><td>FVTPL</td><td>SPL</td></tr>
-    <tr><td rowspan="2">Equity (股权)</td><td>Held for trading</td><td>FVTPL</td><td>SPL</td></tr>
-    <tr><td>Strategic (Election)</td><td>FVTOCI</td><td>OCI (不可重分类)</td></tr>
-</table>` },
-        { id: "Fin_Liab", label: "负债计量", group: 3, parent: "IFRS9", page: 79, desc: "默认 Amortized Cost。\n【⚡考点】交易费用: **抵减** 初始负债金额 (Proceeds - Trans Cost)。" },
+        { id: "Fin_Class", label: "分类与计量", group: 3, parent: "IFRS9", page: 78, desc: "Asset: Amortized/FVTPL/FVTOCI.\nLiab: Amortized Cost." },
+        { id: "IAS32", label: "混合工具", group: 3, parent: "IFRS9", page: 80, desc: `
+【🔥背过】可转债拆分 (Item 9):
+1. **Liability Component:** PV of fixed cash flows discounted at **Market Rate (without option)**.
+2. **Equity Component:** Proceeds - Liability (Residual).` },
+        { id: "DT_Trap", label: "递延税判断", group: 3, parent: "Mod_Liab", page: 70, desc: "【⚡考点】\nDTL (Credit) $\rightarrow$ Asset CA > TB 或 Liab CA < TB (未来多交税)。\nDTA (Debit) $\rightarrow$ Asset CA < TB 或 Liab CA > TB (未来少交税)。" },
 
-        // IFRS 16 (新增表格)
-        { id: "IFRS16", label: "IFRS 16 租赁", group: 3, parent: "Mod_Liab", page: 57 },
-        { id: "Lease_Calc", label: "租赁计算逻辑", group: 3, parent: "IFRS16", page: 58, desc: `
-<table class="info-table">
-    <tr><th>项目</th><th>初始计量</th><th>后续计量</th></tr>
-    <tr><td>Liability</td><td>PV of Payments</td><td>Amortized Cost (Open + Int - Pay)</td></tr>
-    <tr><td>ROU Asset</td><td>Liab + Direct Cost + Dismantling - Incentives</td><td>Cost - Depn - Impairment</td></tr>
-</table>
-<br>【⚡折旧年限】转移所有权 -> 资产寿命；不转移 -> Shorter of Lease/Life。` },
+        // IAS 37 & IFRS 16
+        { id: "IAS37", label: "IAS 37 预计负债", group: 3, parent: "Mod_Liab", page: 64, desc: "确认三要素: Present Obligation + Probable Outflow + Reliable Estimate." },
+        { id: "IFRS16", label: "IFRS 16 租赁", group: 3, parent: "Mod_Liab", page: 57, desc: "ROU Asset + Lease Liab. Liab = PV of payments." },
 
-        // IAS 37
-        { id: "IAS37", label: "IAS 37 预计负债", group: 3, parent: "Mod_Liab", page: 64 },
-        { id: "Prov_Dec", label: "决策树", group: 3, parent: "IAS37", page: 66, desc: `
-<table class="info-table">
-    <tr><th>概率</th><th>义务类型</th><th>处理</th></tr>
-    <tr><td>Virtually Certain (>95%)</td><td>Real</td><td>Provision (Liab)</td></tr>
-    <tr><td>Probable (>50%)</td><td>Present</td><td>Provision</td></tr>
-    <tr><td>Possible (<50%)</td><td>Possible</td><td>Disclosure (Note)</td></tr>
-    <tr><td>Remote</td><td>-</td><td>Ignore</td></tr>
-</table>` },
-
-        // === 4. 绩效 (Performance) ===
+        // === 4. 绩效/收入 (Performance) ===
         { id: "Mod_Perf", label: "绩效报表", group: 4, parent: "Root", page: 84 },
         
-        // Substance Over Form (新增重点板块)
-        { id: "Substance", label: "实质重于形式", group: 4, parent: "Mod_Perf", page: 90 },
-        { id: "Consign", label: "寄售 (Consignment)", group: 4, parent: "Substance", page: 90, desc: "【判断】谁承担风险(Risk)和报酬(Reward)？\n若生产商承担风险(滞销/陈旧) -> 存货仍属于生产商，**不能确认收入**。" },
-        { id: "Repurchase", label: "售后回购", group: 4, parent: "Substance", page: 90, desc: "【判断】卖方有义务/权利以固定价格回购 -> 实质是**抵押借款**。\n处理：不确认收入，确认 Liability，收到的钱视为 Loan。" },
-        { id: "Factor", label: "保理 (Factoring)", group: 4, parent: "Substance", page: 91, desc: "【判断】With Recourse (有追索权) -> 风险未转移 -> 视为**借款** (Loan)。\nWithout Recourse -> 视为出售应收账款。" },
-
         // IFRS 15
         { id: "IFRS15", label: "IFRS 15 收入", group: 4, parent: "Mod_Perf", page: 84 },
-        { id: "Step5", label: "时段确认 (Over Time)", group: 4, parent: "IFRS15", page: 85, desc: `
-【⚡判断标准】满足其一即可：
-1. 客户在履约同时即取得并消耗利益 (如保洁服务)。
-2. 履约过程创造/增强了客户控制的资产 (如在客户土地上建房)。
-3. 产出无替代用途 **且** 有权就已完成部分收款。` },
+        { id: "Step5_Logic", label: "时段确认逻辑", group: 4, parent: "IFRS15", page: 85, desc: "【⚡判断标准】满足其一即可：\n1. 客户在履约同时即取得并消耗利益。\n2. 履约过程创造/增强了客户控制的资产。\n3. 产出无替代用途 **且** 有权就已完成部分收款。" },
+        { id: "Substance", label: "实质重于形式", group: 4, parent: "Mod_Perf", page: 90, desc: "【⚡判断】\n1. **售后回购:** 实质是抵押借款 (Loan)。\n2. **保理 (有追索权):** 实质是借款 (Loan)。\n3. **寄售:** 风险未转移，不确认收入。" },
 
-        // IAS 33
-        { id: "IAS33", label: "IAS 33 EPS", group: 4, parent: "Mod_Perf", page: 101, desc: "Basic EPS = Earnings / WANS.\nBonus Issue: 视同这就存在 (Restate).\nDiluted: Convertibles (Add interest), Options (Add free shares)." },
-
-        // === 5. 合并报表 (Consol - 逻辑细化) ===
+        // === 5. 合并报表 (Consolidation) ===
         { id: "Mod_Consol", label: "合并报表", group: 5, parent: "Root", page: 133 },
         
-        { id: "Process", label: "合并五步法", group: 5, parent: "Mod_Consol", page: 142 },
-        { id: "W2", label: "W2: 净资产调整", group: 5, parent: "Process", page: 153, desc: `
+        // W3 - Goodwill & Adjustments (Item 5)
+        { id: "W3", label: "W3: 商誉/调整", group: 5, parent: "Mod_Consol", page: 154, desc: `
+【⚡规则陷阱】
+1. **或有负债 (Item 5):** IFRS 3 强制确认，确认后 **减少 W2 净资产，增加 W3 商誉**。
+2. **商誉处理:** 不摊销，每年测试减值。
+3. **联营商誉 (Item 5):** 包含在“Investment in Associate”账面价值中，不单独列示。
 <table class="info-table">
-    <tr><th>项目</th><th>At Acquisition</th><th>At Reporting Date</th></tr>
-    <tr><td>Share Capital</td><td>X</td><td>X</td></tr>
-    <tr><td>Retained Earnings</td><td>X</td><td>X</td></tr>
-    <tr><td>FV Adjustments</td><td>X (Asset ↑)</td><td>X</td></tr>
-    <tr><td>Extra Depn (FV)</td><td>-</td><td>(X)</td></tr>
-    <tr><td>PURP (Sub sell)</td><td>-</td><td>(X)</td></tr>
-    <tr class="calc-row"><td>Net Assets</td><td>(A)</td><td>(B)</td></tr>
+    <tr><td>Cost of Investment</td><td>X</td></tr>
+    <tr><td>Add: FV of NCI @ Acq</td><td>X</td></tr>
+    <tr><td>Less: Net Assets @ Acq (W2)</td><td>(X)</td></tr>
+    <tr class="calc-row"><td>Goodwill at Acq</td><td>X</td></tr>
 </table>` },
-        { id: "W3", label: "W3: 商誉", group: 5, parent: "Process", page: 154, desc: "Goodwill = Cost + NCI - Net Assets (A)。\n【⚡】负商誉 (Negative Goodwill) = 廉价购买收益 -> 计入 Group RE。" },
-        { id: "W5", label: "W5: 集团 RE", group: 5, parent: "Process", page: 154, desc: "Parent RE + (P% x Sub Post-acq RE) - Impairment - PURP (Parent sell)。" },
-
-        { id: "Adj", label: "合并调整", group: 5, parent: "Mod_Consol", page: 156 },
-        { id: "PURP_Logic", label: "PURP 逻辑", group: 5, parent: "Adj", page: 157, desc: `
+        
+        // W5 - Reserves (Item 1)
+        { id: "W5", label: "W5: 集团 RE/储备", group: 5, parent: "Mod_Consol", page: 154, desc: `
+【⚡核心技巧】年中收购 (Mid-year Acq) - (Item 1):
+<div class="formula">
+Group Reserve = Parent YE Balance + (Sub Annual Movement x <strong style="color:#f59e0b;">Time Fraction</strong> x P%)
+</div>
+当 "accrued evenly" 时，必须进行**时间分摊** (Time Apportionment)。` },
+        
+        // Intra-Group PPE (Item 3)
+        { id: "PPE_Adj", label: "内部 PPE 调整", group: 5, parent: "Mod_Consol", page: 157, desc: `
+【🔥背过】Intra-Group PPE Transfer (Item 3):
 <div class="logic-tree">
-    <div class="logic-item"><strong>Parent sells to Sub:</strong>
-        <br>Dr Group Retained Earnings
-        <br>Cr Group Inventory
-    </div>
-    <div class="logic-item"><strong>Sub sells to Parent:</strong>
-        <br>Dr Sub Retained Earnings (in W2)
-        <br>Cr Group Inventory
-        <br>*(Impacts NCI calculation)*
-    </div>
+    <div class="logic-item">Group CA = Individual CA Total - <strong style="color:#f59e0b;">PURP Remaining at YE</strong></div>
+    <div class="logic-item">PURP Remaining = Initial PURP (Sale Price - CA) - Excess Depreciation to date</div>
+    <div class="logic-item">Excess Depn = (Buyer's Depn - Seller's Depn)</div>
 </div>` },
-
-        { id: "Disposal", label: "处置子公司", group: 5, parent: "Mod_Consol", page: 163, desc: `
-【🔥背过】Group Gain Calculation:
-<table class="info-table">
-    <tr><td>Proceeds (售价)</td><td>X</td></tr>
-    <tr><td>(+) FV of Retained Interest</td><td>X</td></tr>
-    <tr><td>(-) Net Assets at Disposal</td><td>(X)</td></tr>
-    <tr><td>(-) Goodwill Carrying Amt</td><td>(X)</td></tr>
-    <tr><td>(+) NCI Carrying Amt</td><td>X</td></tr>
-    <tr class="calc-row"><td>Gain/Loss</td><td>X</td></tr>
-</table>` },
+        
+        // Associates & Disposal
+        { id: "Assoc", label: "IAS 28 联营", group: 5, parent: "Mod_Consol", page: 164, desc: "权益法。Inv = Cost + Share of Post-acq Profit - Dividend." },
+        { id: "Mandatory_Intang", label: "IFRS 3 强制确认 (Item 4)", group: 5, parent: "Mod_Consol", page: 153, desc: "【⚡考点】子公司的**内部产生无形资产** (如客户名单) 在合并时必须按 **FV at Acq Date** 强制确认，即便子公司自己未确认。" },
 
         // === 6. 分析 (Analysis) ===
         { id: "Mod_Analy", label: "分析", group: 6, parent: "Root", page: 128 },
-        { id: "Reasoning", label: "原因分析逻辑", group: 6, parent: "Mod_Analy", page: 129, desc: `
-<table class="info-table">
-    <tr><th>比率变化</th><th>潜在原因 (Causes)</th></tr>
-    <tr><td>ROCE ↓</td><td>重估资产(分母↑)、新投资尚未产生回报、利润率下滑。</td></tr>
-    <tr><td>Gearing ↑</td><td>新发行债券、回购股票(权益↓)、亏损导致RE减少。</td></tr>
-    <tr><td>GP Margin ↓</td><td>降价促销、原材料涨价、存货减值(Write-down)。</td></tr>
-    <tr><td>Asset Turnover ↓</td><td>资产闲置、新购资产处于磨合期。</td></tr>
-</table>` }
+        { id: "Ratios", label: "比率公式表", group: 6, parent: "Mod_Analy", page: 128, desc: "【⚡考点】必背公式：ROCE, Gearing, Current Ratio, Liquidity Ratios." },
+        { id: "NFP_Perf", label: "NFP 绩效衡量", group: 6, parent: "Mod_Analy", page: 21, desc: "【🔥背过】**3E原则 (Item 2):**\n- Economy (经济性): 投入成本 (Inputs)\n- Efficiency (效率性): 产出/投入\n- **Effectiveness (效果性):** 结果/目标达成度 (Justify budget increase)." }
     ];
 
     // --- D3.js 渲染 ---
@@ -336,7 +231,7 @@ E - Expenditure reliably measured
     };
 
     const simulation = d3.forceSimulation(nodes)
-        .force("link", d3.forceLink(links).id(d => d.id).distance(d => d.group === 7 ? 60 : 110))
+        .force("link", d3.forceLink(links).id(d => d.id).distance(110))
         .force("charge", d3.forceManyBody().strength(-600))
         .force("center", d3.forceCenter(width / 2, height / 2))
         .force("collide", d3.forceCollide().radius(45));
@@ -391,7 +286,9 @@ E - Expenditure reliably measured
         if (d.desc) {
             let content = d.desc.replace(/\n/g, "<br>");
             content = content.replace(/【(.*?)】/g, '<span class="highlight">$1</span>');
+            content = content.replace(/【🔥(.*?)】/g, '<span class="tag-mem">$1</span>');
             content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            content = content.replace(/\/g, '<span style="color:#64748b;font-size:0.8em;">$&</span>');
             
             html = d.group === 7 ? `<div class="example-box">${content}</div>` : `<div class="detail-box"><div class="detail-title" style="color:${color}">核心逻辑</div><div class="desc">${content}</div></div>`;
         }
