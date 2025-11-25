@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ACCA FR 终极复习图谱 (国内高速版)</title>
-    <script src="https://cdn.staticfile.net/d3/7.9.0/d3.min.js"></script>
+    <title>ACCA FR 终极复习图谱 (稳定极速版)</title>
+    
+    <script src="https://lib.baomitu.com/d3/7.8.5/d3.min.js"></script>
+    
     <style>
         :root {
             --bg-color: #020617;
@@ -12,106 +14,73 @@
             --text-main: #f1f5f9;
             --text-sub: #94a3b8;
             --border-color: #334155;
-            
-            /* 颜色编码 */
-            --c-framework: #ef4444; 
-            --c-assets: #f59e0b;    
-            --c-liab: #10b981;      
-            --c-perf: #06b6d4;      
-            --c-consol: #8b5cf6;    
-            --c-analy: #ec4899;     
-            --c-case: #64748b;      
+            /* 颜色定义 */
+            --c-framework: #ef4444; --c-assets: #f59e0b; --c-liab: #10b981;
+            --c-perf: #06b6d4; --c-consol: #8b5cf6; --c-analy: #ec4899; --c-case: #64748b;
         }
 
-        body { margin: 0; overflow: hidden; background: var(--bg-color); color: var(--text-main); font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; }
+        body { margin: 0; overflow: hidden; background: var(--bg-color); color: var(--text-main); font-family: sans-serif; }
         #container { display: flex; width: 100vw; height: 100vh; }
-        
         #graph-area { flex: 1; position: relative; background: radial-gradient(circle at center, #1e293b 0%, #020617 100%); }
 
-        /* 加载与错误提示 */
-        #status-msg {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            color: var(--text-main); font-size: 1.2rem; text-align: center;
-            background: rgba(0,0,0,0.7); padding: 20px; border-radius: 10px;
-            z-index: 100;
+        /* 状态提示层 */
+        #status-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(2, 6, 23, 0.9); z-index: 999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
-        .error { color: #ef4444 !important; border: 1px solid #ef4444; }
+        #status-text { font-size: 1.5rem; color: #38bdf8; margin-bottom: 10px; }
+        #error-log { color: #ef4444; font-family: monospace; margin-top: 10px; font-size: 0.9rem; max-width: 80%; white-space: pre-wrap; }
 
         /* 侧边栏 */
         #sidebar {
-            width: 450px;
-            background: var(--sidebar-bg);
-            border-left: 1px solid var(--border-color);
-            position: absolute;
-            right: 0; top: 0; height: 100%;
-            transform: translateX(100%);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 20;
-            box-shadow: -10px 0 30px rgba(0,0,0,0.6);
-            display: flex; flex-direction: column;
+            width: 450px; background: var(--sidebar-bg); border-left: 1px solid var(--border-color);
+            position: absolute; right: 0; top: 0; height: 100%;
+            transform: translateX(100%); transition: transform 0.3s ease; z-index: 20;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.6); display: flex; flex-direction: column;
         }
         #sidebar.active { transform: translateX(0); }
 
         .sidebar-header { padding: 20px; border-bottom: 1px solid var(--border-color); background: rgba(15, 23, 42, 0.95); }
         .sidebar-body { padding: 20px; overflow-y: auto; flex: 1; }
         
-        h2 { font-size: 1.4rem; margin: 0 0 10px 0; color: var(--text-main); line-height: 1.3; border-bottom: 2px solid #334155; padding-bottom: 10px; }
-        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; margin-bottom: 10px; color: #000; text-transform: uppercase; }
+        h2 { margin: 0 0 10px 0; color: var(--text-main); border-bottom: 2px solid #334155; padding-bottom: 10px; font-size: 1.4rem; }
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; margin-bottom: 10px; color: #000; }
 
-        /* 详情框 */
-        .detail-box {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
-        }
-        .detail-title { font-size: 0.9rem; color: var(--text-sub); margin-bottom: 8px; font-weight: bold; }
-        .desc { line-height: 1.8; color: #cbd5e1; font-size: 0.95rem; white-space: pre-wrap; }
-        .desc strong { color: #fff; font-weight: bold; background: rgba(255,255,255,0.1); padding: 0 4px; border-radius: 2px; }
-        
-        /* 案例框 */
-        .example-box {
-            background: #1e293b;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 4px solid var(--c-case);
-            margin-top: 15px;
-            font-family: 'Consolas', monospace;
-            white-space: pre-wrap;
-            font-size: 0.9rem;
-            color: #e2e8f0;
-            line-height: 1.6;
-        }
+        /* 内容样式 */
+        .desc { line-height: 1.6; color: #cbd5e1; font-size: 0.95rem; white-space: pre-wrap; margin-bottom: 15px; }
+        .detail-title { color: var(--text-sub); font-weight: bold; font-size: 0.9rem; margin-bottom: 5px; }
+        .detail-box { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+        .example-box { background: #1e293b; padding: 15px; border-left: 4px solid var(--c-case); border-radius: 6px; font-family: monospace; white-space: pre-wrap; }
 
         /* PDF 按钮 */
         .pdf-container { padding: 20px; border-top: 1px solid var(--border-color); background: rgba(15, 23, 42, 0.95); }
         .pdf-btn {
-            display: flex; align-items: center; justify-content: center;
-            background: linear-gradient(135deg, #e11d48, #be123c);
-            color: white; text-decoration: none;
-            padding: 12px; border-radius: 8px; font-weight: bold;
-            transition: all 0.2s; box-shadow: 0 4px 12px rgba(225, 29, 72, 0.3);
-            border: 1px solid #be123c;
+            display: flex; align-items: center; justify-content: center; width: 100%;
+            background: linear-gradient(135deg, #e11d48, #be123c); color: white; text-decoration: none;
+            padding: 12px; border-radius: 8px; font-weight: bold; border: 1px solid #be123c;
+            transition: transform 0.1s;
         }
-        .pdf-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(225, 29, 72, 0.5); }
+        .pdf-btn:hover { transform: translateY(-2px); background: #be123c; }
 
-        .close-btn { position: absolute; top: 15px; right: 15px; background: none; border: none; color: var(--text-sub); font-size: 1.8rem; cursor: pointer; }
-        .close-btn:hover { color: white; }
-
-        /* 搜索与图例 */
-        #controls { position: absolute; top: 20px; left: 20px; background: rgba(15, 23, 42, 0.9); padding: 15px; border-radius: 12px; border: 1px solid var(--border-color); backdrop-filter: blur(5px); }
-        #search { background: #020617; border: 1px solid var(--border-color); color: white; padding: 8px 12px; border-radius: 6px; width: 220px; outline: none; }
+        .close-btn { position: absolute; top: 15px; right: 15px; background: none; border: none; color: var(--text-sub); font-size: 2rem; cursor: pointer; }
+        
+        /* 搜索栏 */
+        #controls { position: absolute; top: 20px; left: 20px; background: rgba(15, 23, 42, 0.9); padding: 15px; border-radius: 12px; border: 1px solid var(--border-color); }
+        #search { background: #020617; border: 1px solid var(--border-color); color: white; padding: 8px 12px; border-radius: 6px; width: 200px; outline: none; }
         .legend-item { display: flex; align-items: center; margin-top: 8px; font-size: 0.8rem; color: var(--text-sub); }
         .dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; }
-
     </style>
 </head>
 <body>
 
 <div id="container">
+    <div id="status-overlay">
+        <div id="status-text">正在初始化引擎...</div>
+        <div id="error-log"></div>
+    </div>
+
     <div id="graph-area">
-        <div id="status-msg">资源加载中...<br>如果长时间无反应，请检查是否已保存为 .html 文件</div>
         <div id="controls">
             <input type="text" id="search" placeholder="🔍 搜索知识点...">
             <div style="margin-top:15px; border-top:1px solid #334155; padding-top:10px;">
@@ -139,126 +108,120 @@
 </div>
 
 <script>
-    // 全局错误捕捉
+    // 日志工具
+    function logStatus(msg, isError = false) {
+        const el = document.getElementById('status-text');
+        const log = document.getElementById('error-log');
+        if (el) el.innerText = isError ? "程序中止" : msg;
+        if (isError && log) log.innerText += "\n错误: " + msg;
+        console.log(msg);
+    }
+
+    // 全局错误捕获
     window.onerror = function(msg, source, lineno, colno, error) {
-        const statusDiv = document.getElementById('status-msg');
-        statusDiv.innerHTML = `⚠️ 程序发生错误:<br>${msg}<br>请检查代码完整性。`;
-        statusDiv.classList.add('error');
+        logStatus(`系统错误: ${msg} (Line ${lineno})`, true);
         return false;
     };
 
-    // 等待 D3 加载
+    // 初始化入口
     window.onload = function() {
-        if (typeof d3 === 'undefined') {
-            const statusDiv = document.getElementById('status-msg');
-            statusDiv.innerHTML = "⚠️ D3.js 库加载失败。<br>请检查网络连接，或确保能访问 cdn.staticfile.net。";
-            statusDiv.classList.add('error');
-            return;
+        try {
+            if (typeof d3 === 'undefined') {
+                throw new Error("D3.js 库未能加载。请检查网络连接 (cdn.staticfile.net)。");
+            }
+            logStatus("数据构建中...");
+            initGraph();
+        } catch (e) {
+            logStatus(e.message, true);
         }
-        initGraph();
     };
 
     function initGraph() {
-        const statusDiv = document.getElementById('status-msg');
-        statusDiv.style.display = 'none';
-
-        // --- 数据定义 ---
+        // --- 1. 数据源 ---
         const nodes = [
             { id: "Root", label: "ACCA FR 核心图谱", group: 0, r: 45, page: 1, desc: "Financial Reporting 知识体系概览" },
 
-            // === 1. 概念与监管 (Red) ===
-            { id: "Mod_Frame", label: "概念与监管", group: 1, parent: "Root", page: 9, desc: "财务报告的理论基石。" },
-            { id: "Ch2", label: "概念框架", group: 1, parent: "Mod_Frame", page: 9, desc: "为准则制定提供理论基础，本身不是准则。\n当准则与框架冲突时，**准则优先** (IFRS overrides Framework)。" },
-            [cite_start]{ id: "Qual", label: "质量特征", group: 1, parent: "Ch2", page: 10, desc: "● **基本特征:** 相关性 (Relevance)、如实反映 (Faithful Rep)。\n● **强化特征:** 可比性、可验证性、及时性、可理解性 [cite: 103-110]。" },
-            [cite_start]{ id: "Meas", label: "计量基础", group: 1, parent: "Ch2", page: 13, desc: "● **历史成本:** 购买价 + 交易费。\n● **现行价值:**\n  1. 公允价值 (FV): 市场退出价格 (Exit price)。\n  2. 使用价值 (VIU): 现金流折现。\n  3. 现行成本 (Current Cost): 重置成本 [cite: 140-147]。" },
-            { id: "S1", label: "IFRS S1 可持续", group: 1, parent: "Mod_Frame", page: 19, desc: "核心披露：Governance, Strategy, Risk Mgmt, Metrics & Targets。" },
+            // === Framework (Red) ===
+            { id: "Mod_Frame", label: "概念与监管", group: 1, parent: "Root", page: 9, desc: "财务报告基础。" },
+            { id: "Ch2", label: "概念框架", group: 1, parent: "Mod_Frame", page: 9, desc: "准则的基础。IFRS 优先于框架。" },
+            { id: "Qual", label: "质量特征", group: 1, parent: "Ch2", page: 10, desc: "Fundamental: Relevance, Faithful Rep.\nEnhancing: Comparability, Verifiability, Timeliness, Understandability." },
+            { id: "Meas", label: "计量基础", group: 1, parent: "Ch2", page: 13, desc: "Historical Cost vs Current Value (FV, VIU, Current Cost)." },
+            { id: "S1", label: "IFRS S1 可持续", group: 1, parent: "Mod_Frame", page: 19, desc: "披露 Governance, Strategy, Risk, Metrics." },
 
-            // === 2. 资产 (Yellow) ===
-            { id: "Mod_Asset", label: "资产准则", group: 2, parent: "Root", page: 23, desc: "核心资产类的确认、计量与披露。" },
+            // === Assets (Yellow) ===
+            { id: "Mod_Asset", label: "资产准则", group: 2, parent: "Root", page: 23, desc: "资产确认与计量。" },
             
             // IAS 16
-            { id: "IAS16", label: "IAS 16 固定资产", group: 2, parent: "Mod_Asset", page: 23, desc: "有形资产，使用超过一期。" },
-            { id: "Init", label: "初始计量", group: 2, parent: "IAS16", page: 24, desc: "Cost = 购买价 + 进口税 + **直接归属费用** (场地准备、运费、安装、测试) + **拆除成本现值** (IAS 37)。\n❌ 不包括：管理费、培训费、启动亏损。" },
-            { id: "Reval", label: "重估模型", group: 2, parent: "IAS16", page: 25, desc: "● **增值 (Gain):** 计入 OCI (RS)。\n● **减值 (Loss):** 先冲 RS，后进 SPL。\n● **多余折旧:** 每年可从 RS 转入 RE。" },
-            { id: "Case_Topsy", label: "案例: Topsy Co", group: 7, parent: "Reval", page: 25, desc: "【重估计算】\n1. **多余折旧:** 新折旧($30k) - 旧折旧($15k) = $15k (Dr RS, Cr RE)。\n2. **土地重估:** FV $950k - Cost $800k = +$150k (Dr Asset, Cr RS)。\n3. **期末 RS:** $705k - $15k + $150k = **$840,000**。" },
+            { id: "IAS16", label: "IAS 16 固定资产", group: 2, parent: "Mod_Asset", page: 23, desc: "有形长期资产。" },
+            { id: "Init", label: "初始计量", group: 2, parent: "IAS16", page: 24, desc: "Cost = Purchase + Direct costs + Dismantling." },
+            { id: "Reval", label: "重估模型", group: 2, parent: "IAS16", page: 25, desc: "Gain -> OCI (RS). Loss -> SPL (unless reversing gain)." },
+            { id: "Case_Topsy", label: "案例: Topsy Co", group: 7, parent: "Reval", page: 25, desc: "重估盈余计算：\n期初 RS + 新增值 - 多余折旧转移 = 期末 RS。" },
 
             // IAS 38
-            { id: "IAS38", label: "IAS 38 无形资产", group: 2, parent: "Mod_Asset", page: 30, desc: "无实物形态资产。" },
-            { id: "RD", label: "R&D 研发", group: 2, parent: "IAS38", page: 31, desc: "● **研究 (Research):** 费用化 (Expense)。\n● **开发 (Development):** 资本化 (Capitalize)，需满足 PIRATE 条件 (Probable benefits, Intention, Resources, Ability, Tech feasibility, Expenditure)。" },
-            { id: "Case_Assoria", label: "案例: Assoria", group: 7, parent: "RD", page: 33, desc: "【R&D 摊销】\nResearch cost ($1.4m) -> SPL。\n摊销从 **Ready for use** (Asset available) 的时点开始，而非项目开始时。" },
+            { id: "IAS38", label: "IAS 38 无形资产", group: 2, parent: "Mod_Asset", page: 30, desc: "无实体资产。" },
+            { id: "RD", label: "R&D 研发", group: 2, parent: "IAS38", page: 31, desc: "Research: Expense.\nDev: Capitalize if PIRATE met." },
+            { id: "Case_Assoria", label: "案例: Assoria", group: 7, parent: "RD", page: 33, desc: "研发摊销计算。" },
 
             // IAS 40
-            { id: "IAS40", label: "IAS 40 投资房产", group: 2, parent: "Mod_Asset", page: 35, desc: "赚租金或资本增值。" },
-            { id: "FV_Mod", label: "公允价值模型", group: 2, parent: "IAS40", page: 36, desc: "默认模型。期末按 FV 计量，**变动进 SPL**。**不折旧**。\n(注意与 IAS 16 重估进 OCI 的区别)。" },
+            { id: "IAS40", label: "IAS 40 投资房产", group: 2, parent: "Mod_Asset", page: 35, desc: "赚租金/增值。" },
+            { id: "FV_Mod", label: "公允价值模型", group: 2, parent: "IAS40", page: 36, desc: "FV 变动进 SPL。不折旧。" },
 
             // IAS 36
-            { id: "IAS36", label: "IAS 36 减值", group: 2, parent: "Mod_Asset", page: 39, desc: "当 Carrying Amount > Recoverable Amount 时减值。" },
-            { id: "RA_Calc", label: "可回收金额 (RA)", group: 2, parent: "IAS36", page: 40, desc: "RA = **Higher of**:\n1. FV less Cost to Sell (净公允价值)\n2. Value in Use (未来现金流折现)。" },
-            { id: "Case_Riley", label: "案例: Riley", group: 7, parent: "RA_Calc", page: 42, desc: "【减值计算】\nNBV=$50k。\nFV-CTS=$30k; VIU=$31,875。\nRA=$31,875 (取高值)。\nImpairment = $50k - $31,875 = **$18,125**。" },
+            { id: "IAS36", label: "IAS 36 减值", group: 2, parent: "Mod_Asset", page: 39, desc: "CA > RA。" },
+            { id: "RA_Calc", label: "RA 计算", group: 2, parent: "IAS36", page: 40, desc: "Max(FV-CTS, VIU)。" },
+            { id: "Case_Riley", label: "案例: Riley", group: 7, parent: "RA_Calc", page: 42, desc: "减值测试实例。" },
 
-            // IAS 23 & 2
-            { id: "IAS23", label: "IAS 23 借款费用", group: 2, parent: "Mod_Asset", page: 44, desc: "Qualifying Asset 需资本化。\n资本化 = 实际利息 - 闲置资金收益。" },
-            { id: "IAS2", label: "IAS 2 存货", group: 2, parent: "Mod_Asset", page: 46, desc: "计量：**Lower of Cost and NRV**。\nNRV = 售价 - 完工成本 - 销售成本。" },
+            // Other Assets
+            { id: "IAS23", label: "IAS 23 借款费用", group: 2, parent: "Mod_Asset", page: 44, desc: "符合条件资产需资本化。" },
+            { id: "IAS2", label: "IAS 2 存货", group: 2, parent: "Mod_Asset", page: 46, desc: "Lower of Cost & NRV。" },
 
-            // === 3. 负债与权益 (Green) ===
-            { id: "Mod_Liab", label: "负债与权益", group: 3, parent: "Root", page: 57, desc: "融资工具与义务。" },
-            
-            // IFRS 16
-            { id: "IFRS16", label: "IFRS 16 租赁", group: 3, parent: "Mod_Liab", page: 57, desc: "承租人模型：ROU Asset + Lease Liability。" },
-            { id: "L_Calc", label: "计量逻辑", group: 3, parent: "IFRS16", page: 58, desc: "● **负债:** 付款额现值。后续按摊余成本。\n● **资产:** 初始负债 + 直接费 + 拆除费。后续按成本折旧。" },
-            { id: "Case_Pebworth", label: "案例: Pebworth", group: 7, parent: "L_Calc", page: 62, desc: "【费用计算】\nSPL Charge = 折旧 (ROU/Life) + 融资成本 (Opening Liab * Rate)。" },
+            // === Liab & Equity (Green) ===
+            { id: "Mod_Liab", label: "负债与权益", group: 3, parent: "Root", page: 57, desc: "负债处理。" },
+            { id: "IFRS16", label: "IFRS 16 租赁", group: 3, parent: "Mod_Liab", page: 57, desc: "ROU Asset + Lease Liab。" },
+            { id: "L_Calc", label: "租赁计算", group: 3, parent: "IFRS16", page: 58, desc: "Liab: PV + Interest - Payment.\nAsset: Cost - Depn." },
+            { id: "Case_Pebworth", label: "案例: Pebworth", group: 7, parent: "L_Calc", page: 62, desc: "租赁 SPL 费用计算。" },
+            { id: "IAS37", label: "IAS 37 预计负债", group: 3, parent: "Mod_Liab", page: 64, desc: "Probable outflow, reliable estimate." },
+            { id: "IAS12", label: "IAS 12 所得税", group: 3, parent: "Mod_Liab", page: 69, desc: "递延税 = (CA - TB) * Rate." },
+            { id: "IFRS9", label: "IFRS 9 金融工具", group: 3, parent: "Mod_Liab", page: 77, desc: "Asset: Amortized/FVTPL/FVTOCI.\nLiab: Amortized Cost." },
+            { id: "Case_Tenfold", label: "案例: Tenfold", group: 7, parent: "IFRS9", page: 81, desc: "摊余成本法计算。" },
 
-            // IAS 37
-            { id: "IAS37", label: "IAS 37 预计负债", group: 3, parent: "Mod_Liab", page: 64, desc: "确认三要素：Present Obligation + Probable Outflow + Reliable Estimate。" },
-            { id: "Case_Onerous", label: "亏损合同", group: 7, parent: "IAS37", page: 65, desc: "Onerous Contract Provision = Lower of (履行成本, 违约罚金)。" },
+            // === Performance (Cyan) ===
+            { id: "Mod_Perf", label: "绩效报表", group: 4, parent: "Root", page: 84, desc: "收入 & EPS。" },
+            { id: "IFRS15", label: "IFRS 15 收入", group: 4, parent: "Mod_Perf", page: 84, desc: "五步法模型。" },
+            { id: "Cons_Cont", label: "建造合同", group: 4, parent: "IFRS15", page: 88, desc: "Over time recognition." },
+            { id: "IAS33", label: "IAS 33 EPS", group: 4, parent: "Mod_Perf", page: 101, desc: "Basic & Diluted EPS." },
 
-            // IAS 12
-            { id: "IAS12", label: "IAS 12 所得税", group: 3, parent: "Mod_Liab", page: 69, desc: "递延税 (DT) = (账面价值 - 计税基础) * 税率。\n变动额计入 Tax Expense (或 OCI)。" },
+            // === Consolidation (Purple) ===
+            { id: "Mod_Consol", label: "合并报表", group: 5, parent: "Root", page: 133, desc: "IFRS 10 & 3。" },
+            { id: "Process", label: "合并五步法", group: 5, parent: "Mod_Consol", page: 142, desc: "Structure, Net Assets, Goodwill, NCI, RE." },
+            { id: "W3", label: "W3: 商誉", group: 5, parent: "Process", page: 154, desc: "Cost + NCI - Net Assets." },
+            { id: "W4", label: "W4: NCI", group: 5, parent: "Process", page: 154, desc: "Fair Value @ Acq + % Post-acq profits." },
+            { id: "Adj", label: "合并调整", group: 5, parent: "Mod_Consol", page: 156, desc: "PURP (Inventory), Intra-group balances." },
+            { id: "Assoc", label: "IAS 28 联营", group: 5, parent: "Mod_Consol", page: 164, desc: "权益法: Cost + Share of Profit." },
+            { id: "Case_Golden", label: "案例: Golden", group: 7, parent: "Mod_Consol", page: 163, desc: "处置子公司收益计算。" },
 
-            // IFRS 9
-            { id: "IFRS9", label: "IFRS 9 金融工具", group: 3, parent: "Mod_Liab", page: 77, desc: "● **资产:** Amortized Cost / FVTPL / FVTOCI。\n● **负债:** Amortized Cost。" },
-            { id: "IAS32", label: "混合工具", group: 3, parent: "IFRS9", page: 80, desc: "可转债拆分 (Split Accounting):\n1. **负债:** 现金流按市场利率折现。\n2. **权益:** 发行得款 - 负债部分。" },
-
-            // === 4. 绩效 (Cyan) ===
-            { id: "Mod_Perf", label: "绩效报表", group: 4, parent: "Root", page: 84, desc: "收入与 EPS。" },
-            { id: "IFRS15", label: "IFRS 15 收入", group: 4, parent: "Mod_Perf", page: 84, desc: "五步法：合同 -> PO -> 价格 -> 分摊 -> 确认。" },
-            { id: "Step5", label: "确认时点", group: 4, parent: "IFRS15", page: 85, desc: "● **时点 (Point in time):** 控制权转移时。\n● **时段 (Over time):** 如建造合同、服务。" },
-            { id: "Cons_Cont", label: "建造合同", group: 4, parent: "IFRS15", page: 88, desc: "按进度 (Input/Output) 确认。\n亏损合同立即确认全部损失。" },
-            
-            { id: "IAS33", label: "IAS 33 EPS", group: 4, parent: "Mod_Perf", page: 101, desc: "Basic EPS = Earnings / WANS。\nDiluted EPS 需调整可转债(加回利息)和期权(免费股)。" },
-
-            // === 5. 合并报表 (Purple - 重点) ===
-            { id: "Mod_Consol", label: "合并报表", group: 5, parent: "Root", page: 133, desc: "IFRS 10 & IFRS 3。" },
-            { id: "Process", label: "合并五步法 (SOFP)", group: 5, parent: "Mod_Consol", page: 142, desc: "W1 结构, W2 净资产, W3 商誉, W4 NCI, W5 集团RE。" },
-            { id: "W3", label: "W3: 商誉", group: 5, parent: "Process", page: 154, desc: "Goodwill = Cost + NCI - Net Assets @ Acq。\n减值 (Impairment) 计入费用。" },
-            { id: "W4", label: "W4: NCI", group: 5, parent: "Process", page: 154, desc: "NCI = NCI @ Acq + NCI% * (Post-acq Net Assets Change)。" },
-            
-            { id: "Adj", label: "合并调整", group: 5, parent: "Mod_Consol", page: 156, desc: "抵消内部交易。" },
-            { id: "PURP", label: "PURP (未实现利润)", group: 5, parent: "Adj", page: 157, desc: "存货交易抵消：\n● **母卖子:** Dr Group RE, Cr Group Inv。\n● **子卖母:** Dr Sub RE (影响 NCI), Cr Group Inv。" },
-            
-            { id: "Assoc", label: "IAS 28 联营公司", group: 5, parent: "Mod_Consol", page: 164, desc: "权益法 (Equity Method)。\nSOFP: Cost + Share of Post-acq Profit - Dividend。" },
-            { id: "Case_Golden", label: "案例: Golden Co", group: 7, parent: "Mod_Consol", page: 163, desc: "【处置子公司】\nGain = Proceeds + FV Retained Interest - (Net Assets @ Disposal + Goodwill)。" },
-
-            // === 6. 分析 (Pink) ===
-            { id: "Mod_Analy", label: "分析与解读", group: 6, parent: "Root", page: 128, desc: "比率与现金流。" },
-            { id: "Ratios", label: "财务比率", group: 6, parent: "Mod_Analy", page: 128, desc: "ROCE, Gearing, Liquidity, Working Capital days。" },
-            { id: "Cashflow", label: "IAS 7 现金流", group: 6, parent: "Mod_Analy", page: 122, desc: "经营 (Operating), 投资 (Investing), 融资 (Financing)。" }
+            // === Analysis (Pink) ===
+            { id: "Mod_Analy", label: "分析", group: 6, parent: "Root", page: 128, desc: "比率与现金流。" },
+            { id: "Ratios", label: "财务比率", group: 6, parent: "Mod_Analy", page: 128, desc: "ROCE, Gearing, Liquidity." },
+            { id: "Cashflow", label: "IAS 7 现金流", group: 6, parent: "Mod_Analy", page: 122, desc: "Operating, Investing, Financing." }
         ];
 
-        // 生成连线 (防错处理)
+        // --- 2. 安全构建连线 (防错机制) ---
+        logStatus("构建数据关联...");
         const nodeMap = new Map(nodes.map(n => [n.id, n]));
         const links = [];
+        
         nodes.forEach(n => {
             if (n.parent) {
                 if (nodeMap.has(n.parent)) {
                     links.push({ source: n.parent, target: n.id });
                 } else {
-                    console.warn(`Parent node '${n.parent}' not found for '${n.id}'`);
+                    console.warn("跳过孤立节点 (找不到父节点): " + n.id);
                 }
             }
         });
 
-        // --- D3 渲染 ---
+        // --- 3. 渲染引擎 ---
         const width = window.innerWidth;
         const height = window.innerHeight;
         
@@ -269,24 +232,20 @@
 
         const g = svg.append("g");
 
-        // 颜色
         const colorMap = {
             0: "#fff", 1: "#ef4444", 2: "#f59e0b", 3: "#10b981", 4: "#06b6d4", 5: "#8b5cf6", 6: "#ec4899", 7: "#64748b"
         };
 
-        // 模拟
         const simulation = d3.forceSimulation(nodes)
-            .force("link", d3.forceLink(links).id(d => d.id).distance(d => d.group === 7 ? 60 : 100))
-            .force("charge", d3.forceManyBody().strength(-400))
+            .force("link", d3.forceLink(links).id(d => d.id).distance(d => d.group === 7 ? 50 : 100))
+            .force("charge", d3.forceManyBody().strength(-300))
             .force("center", d3.forceCenter(width / 2, height / 2))
             .force("collide", d3.forceCollide().radius(35));
 
-        // 线
         const link = g.append("g").selectAll("line")
             .data(links).join("line")
             .attr("stroke", "#334155").attr("stroke-width", 1.5).attr("stroke-opacity", 0.6);
 
-        // 节点
         const node = g.append("g").selectAll("g")
             .data(nodes).join("g")
             .call(d3.drag().on("start", dragstart).on("drag", dragged).on("end", dragend))
@@ -307,7 +266,10 @@
             .style("pointer-events", "none")
             .style("text-shadow", "2px 2px 3px #000");
 
-        // 交互
+        // 移除加载层
+        document.getElementById('status-overlay').style.display = 'none';
+
+        // 交互函数
         function dragstart(e, d) { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
         function dragged(e, d) { d.fx = e.x; d.fy = e.y; }
         function dragend(e, d) { if (!e.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }
@@ -325,6 +287,7 @@
         });
     }
 
+    // 侧边栏
     function toggleSidebar(show) {
         const sb = document.getElementById("sidebar");
         show ? sb.classList.add("active") : sb.classList.remove("active");
@@ -334,33 +297,19 @@
         const header = document.getElementById("header-content");
         const body = document.getElementById("body-content");
         const footer = document.getElementById("pdf-footer");
+        const color = {0: "#fff", 1: "#ef4444", 2: "#f59e0b", 3: "#10b981", 4: "#06b6d4", 5: "#8b5cf6", 6: "#ec4899", 7: "#64748b"}[d.group];
         
-        const groupNames = ["Core", "Framework", "Assets", "Liabilities", "Performance", "Consolidation", "Analysis", "Case"];
-        const colors = ["#fff", "#ef4444", "#f59e0b", "#10b981", "#06b6d4", "#8b5cf6", "#ec4899", "#64748b"];
+        header.innerHTML = `<span class="badge" style="background:${color}; color:${d.group===0?'#000':'#fff'}">节点详情</span><h2>${d.label}</h2>`;
         
-        header.innerHTML = `<span class="badge" style="background:${colors[d.group]}">${groupNames[d.group]}</span><h2>${d.label}</h2>`;
-        
-        let descHtml = '';
-        if (d.group === 7) {
-            descHtml = `<div class="example-box">${formatText(d.desc)}</div>`;
-        } else if (d.desc) {
-            descHtml = `<div class="detail-box"><div class="detail-title" style="color:${colors[d.group]}">知识要点</div><div class="desc">${formatText(d.desc)}</div></div>`;
+        let html = "";
+        if (d.desc) {
+            const content = d.desc.replace(/\n/g, "<br>").replace(/\*\*(.*?)\*\*/g, '<strong style="color:#fff">$1</strong>');
+            html = d.group === 7 ? `<div class="example-box">${content}</div>` : `<div class="detail-box"><div class="detail-title" style="color:${color}">核心要点</div><div class="desc">${content}</div></div>`;
         }
-        body.innerHTML = descHtml || `<div class="desc" style="text-align:center; color:#64748b;">点击下方按钮查看教材详情</div>`;
+        body.innerHTML = html || `<div class="desc" style="text-align:center; color:#64748b;">暂无详细描述</div>`;
 
-        if (d.page) {
-            footer.innerHTML = `<a href="FR电子教材.pdf#page=${d.page}" target="_blank" class="pdf-btn"><span>📖</span> 打开教材 (第 ${d.page} 页)</a>`;
-        } else {
-            footer.innerHTML = '';
-        }
+        footer.innerHTML = d.page ? `<a href="FR电子教材.pdf#page=${d.page}" target="_blank" class="pdf-btn"><span>📖</span> 打开教材 (第 ${d.page} 页)</a>` : "";
         toggleSidebar(true);
-    }
-
-    function formatText(text) {
-        if (!text) return "";
-        text = text.replace(/\/g, '<span style="color:#64748b; font-size:0.8em;">$&</span>');
-        text = text.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#fff; background:rgba(255,255,255,0.1);">$1</strong>');
-        return text;
     }
 </script>
 </body>
