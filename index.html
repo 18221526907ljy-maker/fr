@@ -3,526 +3,309 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ACCA FR 知识图谱 (PDF 联动版)</title>
+    <title>ACCA FR 思维导图复刻版 (PDF联动)</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         :root {
-            --bg-color: #0f172a;
-            --text-color: #e2e8f0;
-            --sidebar-bg: #1e293b;
-            --accent-color: #38bdf8;
-            --node-chapter: #ef4444;
-            --node-standard: #f59e0b;
-            --node-concept: #10b981;
-            --node-case: #8b5cf6;
-            --btn-hover: #2563eb;
+            --bg-color: #020617;
+            --sidebar-bg: #0f172a;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            
+            /* 颜色编码 - 对应思维导图六大板块 */
+            --c-framework: #ef4444; /* 红：概念框架 */
+            --c-assets: #f59e0b;    /* 黄：资产 */
+            --c-liab: #10b981;      /* 绿：负债与工具 */
+            --c-perf: #06b6d4;      /* 青：收入与EPS */
+            --c-consol: #8b5cf6;    /* 紫：合并报表 */
+            --c-analy: #ec4899;     /* 粉：分析 */
+            --c-case: #64748b;      /* 灰：案例 */
         }
 
-        body {
-            margin: 0;
-            overflow: hidden;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+        body { margin: 0; overflow: hidden; background: var(--bg-color); color: var(--text-main); font-family: 'Segoe UI', sans-serif; }
+        #container { display: flex; width: 100vw; height: 100vh; }
+        
+        /* 图谱区域 */
+        #graph-area { flex: 1; position: relative; background: radial-gradient(circle at center, #1e293b 0%, #020617 100%); }
 
-        #container {
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-        }
-
-        #graph-container {
-            flex-grow: 1;
-            position: relative;
-            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
-        }
-
+        /* 侧边栏 */
         #sidebar {
             width: 400px;
-            background-color: var(--sidebar-bg);
+            background: var(--sidebar-bg);
             border-left: 1px solid #334155;
             padding: 20px;
-            box-shadow: -5px 0 15px rgba(0,0,0,0.3);
-            overflow-y: auto;
             position: absolute;
-            right: 0;
-            top: 0;
-            height: 100%;
-            z-index: 10;
-            transform: translateX(0);
-            transition: transform 0.3s ease;
-        }
-
-        #sidebar.hidden {
+            right: 0; top: 0; height: 100%;
             transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 20;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+            overflow-y: auto;
         }
+        #sidebar.active { transform: translateX(0); }
 
-        h1 { font-size: 1.2rem; color: var(--accent-color); margin-top: 0; border-bottom: 2px solid #334155; padding-bottom: 10px; }
-        h2 { font-size: 1.1rem; margin-top: 20px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+        /* 内容样式 */
+        h2 { font-size: 1.4rem; border-bottom: 2px solid #334155; padding-bottom: 10px; margin-top: 0; color: var(--text-main); }
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; margin-bottom: 10px; color: #000; }
+        .desc { line-height: 1.6; color: var(--text-sub); margin-bottom: 20px; white-space: pre-wrap; }
         
-        .content-block {
-            margin-bottom: 15px;
-            line-height: 1.6;
-            font-size: 0.95rem;
-            color: #cbd5e1;
-        }
-
-        .example-box {
-            background-color: #334155;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 4px solid var(--node-case);
-            margin-top: 15px;
-            font-family: 'Consolas', monospace;
-            white-space: pre-wrap;
-            font-size: 0.9rem;
-            line-height: 1.5;
-        }
-
-        .tag {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 15px;
-            font-size: 0.75rem;
-            margin-right: 5px;
-            color: white;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-
-        /* PDF 跳转按钮样式 */
+        /* PDF 按钮 */
         .pdf-btn {
-            display: block;
-            width: 100%;
-            text-align: center;
-            background-color: #dc2626;
-            color: white;
-            text-decoration: none;
-            padding: 12px 0;
-            border-radius: 8px;
-            margin-top: 20px;
-            font-weight: bold;
-            transition: background 0.2s;
-            box-sizing: border-box;
-            border: 1px solid #b91c1c;
+            display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, #e11d48, #be123c);
+            color: white; text-decoration: none;
+            padding: 12px; border-radius: 8px; font-weight: bold;
+            transition: all 0.2s; box-shadow: 0 4px 12px rgba(225, 29, 72, 0.3);
         }
-        .pdf-btn:hover {
-            background-color: #b91c1c;
-        }
-        .pdf-btn span {
-            font-size: 0.8em;
-            opacity: 0.8;
-            font-weight: normal;
-        }
+        .pdf-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(225, 29, 72, 0.5); }
 
+        /* 控制面板 */
         #controls {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(30, 41, 59, 0.9);
-            padding: 15px;
-            border-radius: 12px;
-            backdrop-filter: blur(5px);
-            border: 1px solid #475569;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: absolute; top: 20px; left: 20px;
+            background: rgba(15, 23, 42, 0.9);
+            padding: 15px; border-radius: 12px;
+            border: 1px solid #334155; backdrop-filter: blur(10px);
         }
-
-        input[type="text"] {
-            background: #0f172a;
-            border: 1px solid #475569;
-            color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
-            width: 220px;
-            outline: none;
+        #search {
+            background: #020617; border: 1px solid #334155; color: white;
+            padding: 10px; border-radius: 6px; width: 250px; outline: none;
         }
-        input[type="text"]:focus { border-color: var(--accent-color); }
+        #search:focus { border-color: #38bdf8; }
 
-        .legend { margin-top: 12px; font-size: 0.85rem; }
-        .legend-item { display: flex; align-items: center; margin-bottom: 6px; cursor: default; }
-        .legend-color { width: 12px; height: 12px; border-radius: 50%; margin-right: 10px; }
+        /* 图例 */
+        .legend-item { display: flex; align-items: center; margin-top: 8px; font-size: 0.85rem; color: var(--text-sub); }
+        .dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; }
 
-        .close-btn {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            cursor: pointer;
-            font-size: 1.5rem;
-            color: #94a3b8;
-            background: none;
-            border: none;
-        }
-        .close-btn:hover { color: #fff; }
-
+        .close-btn { position: absolute; top: 15px; right: 15px; background: none; border: none; color: #64748b; font-size: 1.5rem; cursor: pointer; }
+        .close-btn:hover { color: white; }
     </style>
 </head>
 <body>
 
 <div id="container">
-    <div id="graph-container">
+    <div id="graph-area">
         <div id="controls">
-            <input type="text" id="search" placeholder="搜索知识点 (e.g. Topsy)...">
-            <div class="legend">
-                <div class="legend-item"><div class="legend-color" style="background:var(--node-chapter)"></div>章节 (Chapters)</div>
-                <div class="legend-item"><div class="legend-color" style="background:var(--node-standard)"></div>准则 (Standards)</div>
-                <div class="legend-item"><div class="legend-color" style="background:var(--node-concept)"></div>核心概念 (Concepts)</div>
-                <div class="legend-item"><div class="legend-color" style="background:var(--node-case)"></div>案例/计算 (Cases)</div>
+            <input type="text" id="search" placeholder="🔍 搜索知识点 (如: Goodwill)...">
+            <div style="margin-top:15px; border-top:1px solid #334155; padding-top:10px;">
+                <div class="legend-item"><div class="dot" style="background:var(--c-framework)"></div>概念与监管 (Framework)</div>
+                <div class="legend-item"><div class="dot" style="background:var(--c-assets)"></div>资产准则 (Assets)</div>
+                <div class="legend-item"><div class="dot" style="background:var(--c-liab)"></div>负债/权益 (Liab & Equity)</div>
+                <div class="legend-item"><div class="dot" style="background:var(--c-perf)"></div>绩效报表 (Performance)</div>
+                <div class="legend-item"><div class="dot" style="background:var(--c-consol)"></div>合并报表 (Consolidation)</div>
+                <div class="legend-item"><div class="dot" style="background:var(--c-analy)"></div>分析 (Analysis)</div>
             </div>
         </div>
     </div>
-    <div id="sidebar" class="hidden">
-        <button class="close-btn" onclick="closeSidebar()">×</button>
-        <div id="node-details"></div>
+    <div id="sidebar">
+        <button class="close-btn" onclick="toggleSidebar(false)">×</button>
+        <div id="content"></div>
     </div>
 </div>
 
 <script>
-    // --- 1. 数据构建 (含精确 PDF 页码) ---
-    // Page Mapping Source: Table of Contents  and Content Analysis
-    const data = {
-        nodes: [
-            { id: "FR", group: 0, label: "Financial Reporting (FR)", desc: "ACCA FR 核心知识体系", page: 1 },
-            
-            // --- Chapter 1 ---
-            { id: "Ch1", group: 1, label: "Ch1: 报表格式", desc: "IFRS 18 Presentation and disclosure", page: 5 },
-            { id: "SOFP", group: 2, label: "SOFP (资产负债表)", parent: "Ch1", desc: "资产 = 负债 + 权益。需区分流动与非流动。", page: 5 },
-            { id: "SPL", group: 2, label: "SPL (利润表)", parent: "Ch1", desc: "IFRS 18新规分类：Operating, Investing, Financing, Income Taxes, Discontinued [cite: 35-41]。", page: 7 },
-            { id: "SOCE", group: 2, label: "SOCE (权益变动表)", parent: "Ch1", desc: "记录 Share Capital, Premium, RE, Revaluation Surplus 的变动。", page: 8 },
+    // --- 数据构建：基于思维导图逻辑的深度复刻 ---
+    const nodes = [
+        { id: "Root", label: "ACCA FR 核心图谱", group: 0, r: 40, page: 1 },
 
-            // --- Chapter 2 ---
-            { id: "Ch2", group: 1, label: "Ch2: 概念框架", desc: "Conceptual Framework", page: 9 },
-            { id: "Qualitative", group: 3, label: "质量特征", parent: "Ch2", desc: "Fundamental (Relevance, Faithful rep) vs Enhancing (Comparability, Verifiability, Timeliness, Understandability) [cite: 89-113]。", page: 10 },
-            { id: "Elements", group: 3, label: "五大要素", parent: "Ch2", desc: "Asset, Liability, Equity, Income, Expense。", page: 12 },
-            { id: "Measurement", group: 3, label: "计量基础", parent: "Ch2", desc: "Historical Cost vs Current Value (Fair Value, Value in use, Current Cost) [cite: 129-143]。", page: 13 },
-            { id: "Case_Drexler", group: 4, label: "案例: Drexler Co", parent: "Measurement", desc: "【教材例题】\n计算 Historical Cost vs Current Cost 下的账面价值。\nPlant Cost: $500k, Life: 5y.\n两年后 Current Price: $600k.\nHC NBV = 300k\nCC NBV = 360k", page: 16 },
+        // === 1. 概念与监管 (Framework) ===
+        { id: "Mod_Frame", label: "概念与监管", group: 1, parent: "Root", page: 9 },
+        { id: "Ch2", label: "概念框架", group: 1, parent: "Mod_Frame", page: 9 },
+        { id: "Qual", label: "质量特征", group: 1, parent: "Ch2", desc: "Fundamental: Relevance, Faithful Rep\nEnhancing: Comparability, Verifiability, Timeliness, Understandability", page: 10 },
+        { id: "Meas", label: "计量基础", group: 1, parent: "Ch2", desc: "Historical Cost vs Current Value (FV, VIU, Current Cost)", page: 13 },
+        { id: "Ch3", label: "监管框架", group: 1, parent: "Mod_Frame", page: 17 },
+        { id: "S1", label: "IFRS S1 可持续", group: 1, parent: "Ch3", desc: "Governance, Strategy, Risk Mgmt, Metrics", page: 19 },
 
-            // --- Chapter 3 ---
-            { id: "Ch3", group: 1, label: "Ch3: 监管框架", desc: "IFRS Foundation structure & IFRS S1/S2", page: 17 },
-            { id: "IFRS_S1", group: 2, label: "IFRS S1", parent: "Ch3", desc: "可持续发展披露一般要求。核心内容：Governance, Strategy, Risk Management, Metrics/Targets。", page: 19 },
+        // === 2. 资产 (Assets - The Largest Branch) ===
+        { id: "Mod_Asset", label: "资产准则", group: 2, parent: "Root", page: 23 },
+        
+        // PPE
+        { id: "IAS16", label: "IAS 16 固定资产", group: 2, parent: "Mod_Asset", page: 23 },
+        { id: "Init", label: "初始计量", group: 2, parent: "IAS16", desc: "Cost = Purchase Price + Directly Attributable Costs + Dismantling (PV)", page: 24 },
+        { id: "Depn", label: "折旧方法", group: 2, parent: "IAS16", desc: "Straight-line vs Reducing balance. Component depreciation.", page: 24 },
+        { id: "Reval", label: "重估模型", group: 2, parent: "IAS16", desc: "Gain -> OCI/RS. Loss -> PL (unless reversing gain). Transfer excess depn.", page: 25 },
+        { id: "Case_Topsy", label: "案例: Topsy Co", group: 7, parent: "Reval", desc: "【重估盈余计算】\n1. Transfer excess depn: ($15k)\n2. Land gain: +$150k\nClosing RS = $840k", page: 25 },
 
-            // --- Chapter 4: Assets ---
-            { id: "Ch4", group: 1, label: "Ch4: 资产类准则", desc: "IAS 16, 38, 40, 36, 23, 2, 41, IFRS 5", page: 23 },
-            
-            // IAS 16
-            { id: "IAS16", group: 2, label: "IAS 16 PPE", parent: "Ch4", desc: "固定资产。初始计量：Cost (含直接归属费用，拆除成本)。", page: 23 },
-            { id: "Depreciation", group: 3, label: "折旧", parent: "IAS16", desc: "开始：Ready for use。闲置：继续折旧。方法：直线法/余额递减法。", page: 24 },
-            { id: "Revaluation", group: 3, label: "重估模型", parent: "IAS16", desc: "增值记 OCI/RS。减值先抵减 RS 再进 SPL。每年需转移多余折旧(RS -> RE)。", page: 25 },
-            { id: "Case_Elite", group: 4, label: "案例: Elite Co", parent: "IAS16", desc: "【教材例题】\n邮轮组件拆分折旧。\nShip fabric (25y), Fittings (12y), Propulsion (40k hours)。\n更换推进系统时，旧系统剩余价值需 derecognize，新成本 capitalize。", page: 28 },
-            { id: "Case_Topsy", group: 4, label: "案例: Topsy Co (重估)", parent: "Revaluation", desc: "【重估盈余余额计算】\n1. 期初 RS: $705,000\n2. 建筑物调整 (多余折旧转移):\n   $1.5m/50y = $30k (新)\n   $750k/50y = $15k (旧)\n   转移: ($15,000) (RS -> RE)\n3. 土地调整 (重估增值):\n   $950k - $800k = +$150,000 (计入 RS)\n4. 期末余额: $840,000", page: 25 }, // Linked to Revaluation concept page
+        // Intangibles
+        { id: "IAS38", label: "IAS 38 无形资产", group: 2, parent: "Mod_Asset", page: 30 },
+        { id: "RD", label: "R&D 研发", group: 2, parent: "IAS38", desc: "Research: Expense.\nDevelopment: Capitalize (PIRATE criteria).", page: 31 },
+        { id: "Case_Assoria", label: "案例: Assoria", group: 7, parent: "RD", desc: "研发费用摊销计算与资本化时点判断。", page: 33 },
 
-            // IAS 38
-            { id: "IAS38", group: 2, label: "IAS 38 无形资产", parent: "Ch4", desc: "无实体、可辨认、非货币性资产。", page: 30 },
-            { id: "RD", group: 3, label: "R&D (研发)", parent: "IAS38", desc: "Research: Expense.\nDevelopment: Capitalize if PIRATE criteria met [cite: 513-520]。", page: 31 },
-            { id: "Case_Assoria", group: 4, label: "案例: Assoria Co", parent: "IAS38", desc: "【教材例题】\n计算研发费用摊销。\nResearch cost ($1.4m) -> SPL.\nDev cost ($0.8m/mo) -> Capitalize from confident date。", page: 33 },
+        // Investment Property
+        { id: "IAS40", label: "IAS 40 投资房产", group: 2, parent: "Mod_Asset", page: 35 },
+        { id: "FV_Mod", label: "公允价值模型", group: 2, parent: "IAS40", desc: "FV changes -> P&L. No depreciation.", page: 36 },
+        { id: "Case_Carter", label: "案例: Carter", group: 7, parent: "FV_Mod", desc: "PPE 转 IP 的会计处理。", page: 38 },
 
-            // IAS 40
-            { id: "IAS40", group: 2, label: "IAS 40 投资性房地产", parent: "Ch4", desc: "赚租金或资本增值。Fair Value Model (变动进 SPL，不折旧) vs Cost Model。", page: 35 },
-            { id: "Case_Carter", group: 4, label: "案例: Carter Co", parent: "IAS40", desc: "【教材例题】\nOwner-occupied 转 Investment Property。\n转换日先重估至 FV (Gain -> OCI)，之后按 IAS 40 处理。", page: 38 },
+        // Impairment
+        { id: "IAS36", label: "IAS 36 减值", group: 2, parent: "Mod_Asset", page: 39 },
+        { id: "CGU", label: "CGU 分摊", group: 2, parent: "IAS36", desc: "Order: 1.Specific 2.Goodwill 3.Pro-rata", page: 40 },
+        { id: "Case_Riley", label: "案例: Riley", group: 7, parent: "IAS36", desc: "VIU vs FV-CTS 计算 RA。", page: 42 },
 
-            // IAS 36
-            { id: "IAS36", group: 2, label: "IAS 36 资产减值", parent: "Ch4", desc: "Carrying Amount > Recoverable Amount.\nRA = Higher of (FV-CTS, VIU)。", page: 39 },
-            { id: "CGU", group: 3, label: "CGU (现金产出单元)", parent: "IAS36", desc: "减值分摊顺序：1. Specific asset damage 2. Goodwill 3. Pro-rata other assets。", page: 40 },
-            { id: "Case_Riley", group: 4, label: "案例: Riley Co", parent: "IAS36", desc: "【教材例题】\n计算 Impairment Loss。\nNBV=$50k. FV-CTS=$30k. VIU=$31,875 (Cashflows discounted)。\nRecoverable amount = $31,875。\nImpairment = $18,125。", page: 42 },
+        // Other Assets
+        { id: "IAS23", label: "IAS 23 借款费用", group: 2, parent: "Mod_Asset", desc: "Qualifying Asset Capitalization", page: 44 },
+        { id: "IAS2", label: "IAS 2 存货", group: 2, parent: "Mod_Asset", desc: "Lower of Cost & NRV", page: 46 },
+        { id: "IFRS5", label: "IFRS 5 持有待售", group: 2, parent: "Mod_Asset", desc: "Available for immediate sale + Highly probable", page: 50 },
+        { id: "IAS41", label: "IAS 41 农业", group: 2, parent: "Mod_Asset", desc: "Bio Assets: FV-CTS", page: 54 },
 
-            // IAS 23
-            { id: "IAS23", group: 2, label: "IAS 23 借款费用", parent: "Ch4", desc: "Qualifying Asset (建造期长)。资本化利息 = 实际发生 - 临时投资收益。", page: 44 },
-            { id: "Case_Fido", group: 4, label: "案例: Fido Co", parent: "IAS23", desc: "【教材例题】\n一般借款加权平均利率计算。\nLoan A (10%) & Loan B (8%)。\nWACC calculation for capitalization rate。", page: 45 },
+        // === 3. 负债与权益 (Liab & Equity) ===
+        { id: "Mod_Liab", label: "负债与权益", group: 3, parent: "Root", page: 57 },
+        
+        // Leases
+        { id: "IFRS16", label: "IFRS 16 租赁", group: 3, parent: "Mod_Liab", page: 57 },
+        { id: "ROU", label: "ROU 资产", group: 3, parent: "IFRS16", desc: "Cost model (Depreciation)", page: 58 },
+        { id: "L_Liab", label: "租赁负债", group: 3, parent: "IFRS16", desc: "PV of payments. Subsequent: Amortized Cost.", page: 59 },
+        { id: "Case_Pebworth", label: "案例: Pebworth", group: 7, parent: "L_Liab", desc: "租赁负债摊销表与拆分 NCL/CL。", page: 62 },
 
-            // IAS 2
-            { id: "IAS2", group: 2, label: "IAS 2 存货", parent: "Ch4", desc: "Lower of Cost and NRV (Net Realizable Value)。", page: 46 },
-            { id: "Case_Litch", group: 4, label: "案例: Litch Co", parent: "IAS2", desc: "【教材例题】\nWIP valuation。\nCost $14,900. NRV = Selling price - Completion cost - Selling cost。", page: 48 },
+        // Provisions
+        { id: "IAS37", label: "IAS 37 预计负债", group: 3, parent: "Mod_Liab", page: 64 },
+        { id: "Prov_Def", label: "确认条件", group: 3, parent: "IAS37", desc: "Present Obligation + Probable Outflow + Reliable Estimate", page: 64 },
+        
+        // Tax
+        { id: "IAS12", label: "IAS 12 所得税", group: 3, parent: "Mod_Liab", page: 69 },
+        { id: "Def_Tax", label: "递延所得税", group: 3, parent: "IAS12", desc: "(Carrying Amt - Tax Base) * Rate", page: 70 },
 
-            // IFRS 5
-            { id: "IFRS5", group: 2, label: "IFRS 5 持有待售", parent: "Ch4", desc: "条件：Available for immediate sale, Highly probable, <1 year。\n计量：Lower of CA and FV-CTS。停止折旧。", page: 50 },
+        // Financial Instruments
+        { id: "IFRS9", label: "IFRS 9 金融工具", group: 3, parent: "Mod_Liab", page: 77 },
+        { id: "Fin_Asset", label: "金融资产", group: 3, parent: "IFRS9", desc: "Amortized Cost / FVTOCI / FVTPL", page: 78 },
+        { id: "Fin_Liab", label: "金融负债", group: 3, parent: "IFRS9", desc: "Amortized Cost (EIR Method)", page: 79 },
+        { id: "IAS32", label: "混合工具", group: 3, parent: "IFRS9", desc: "Convertible Bonds: Split Accounting (Liab + Equity)", page: 80 },
+        { id: "Case_Tenfold", label: "案例: Tenfold", group: 7, parent: "Fin_Asset", desc: "摊余成本法计算。", page: 81 },
 
-            // IAS 41
-            { id: "IAS41", group: 2, label: "IAS 41 农业", parent: "Ch4", desc: "生物资产：FV - CTS (变动进 SPL)。\n收获农产品：Harvest 时 FV - CTS 转为 Inventory Cost。", page: 54 },
-            { id: "Case_Shaw", group: 4, label: "案例: Shaw Co", parent: "IAS41", desc: "【教材例题】\n羊群估值。\nYear end measure at FV ($480k) less commission (4%). Gain to SPL。", page: 55 },
+        // === 4. 绩效 (Performance) ===
+        { id: "Mod_Perf", label: "绩效报表", group: 4, parent: "Root", page: 84 },
+        { id: "IFRS15", label: "IFRS 15 收入", group: 4, parent: "Mod_Perf", page: 84 },
+        { id: "Steps", label: "五步法", group: 4, parent: "IFRS15", desc: "Contract -> PO -> Price -> Allocate -> Recognize", page: 85 },
+        { id: "Cons_Cont", label: "建造合同", group: 4, parent: "IFRS15", desc: "Input/Output method for progress", page: 88 },
+        { id: "IAS33", label: "IAS 33 EPS", group: 4, parent: "Mod_Perf", page: 101 },
+        { id: "Basic", label: "Basic EPS", group: 4, parent: "IAS33", desc: "Earnings / WANS (Bonus/Rights issue adj)", page: 101 },
+        { id: "Diluted", label: "Diluted EPS", group: 4, parent: "IAS33", desc: "Convertibles & Options impact", page: 103 },
 
-            // --- Chapter 5: Leases ---
-            { id: "Ch5", group: 1, label: "Ch5: 租赁 (IFRS 16)", desc: "Lessee Accounting", page: 57 },
-            { id: "ROU_Liab", group: 2, label: "ROU Asset & Liability", parent: "Ch5", desc: "Asset: Cost model. Liability: PV of lease payments。", page: 58 },
-            { id: "Exemptions", group: 3, label: "豁免情况", parent: "Ch5", desc: "Short-term (<12m) & Low value assets -> Expense straight line。", page: 57 },
-            { id: "Case_Pebworth", group: 4, label: "案例: Pebworth Co", parent: "Ch5", desc: "【教材例题】\n计算 SPL Charge (Depn + Interest)。\nLiab Opening $15.4m. Interest 8%。\nDepn over shorter of lease term or useful life (if no transfer)。", page: 62 },
+        // === 5. 合并报表 (Consolidation - The Big One) ===
+        { id: "Mod_Consol", label: "合并报表", group: 5, parent: "Root", page: 133 },
+        { id: "Process", label: "合并五步法 (SOFP)", group: 5, parent: "Mod_Consol", page: 142 },
+        { id: "W1", label: "W1: 集团结构", group: 5, parent: "Process", desc: "Acquisition Date, % Holding, Consideration", page: 142 },
+        { id: "W2", label: "W2: 子公司净资产", group: 5, parent: "Process", desc: "At Acq vs At Reporting Date (FV adjustments)", page: 153 },
+        { id: "W3", label: "W3: 商誉 (Goodwill)", group: 5, parent: "Process", desc: "Cost + NCI - Net Assets @ Acq", page: 154 },
+        { id: "W4", label: "W4: NCI", group: 5, parent: "Process", desc: "NCI @ Acq + % * Post-acq retained earnings", page: 154 },
+        { id: "W5", label: "W5: 集团留存收益", group: 5, parent: "Process", desc: "Parent RE + % * Sub Post-acq RE - Impairment", page: 154 },
+        
+        { id: "Adj", label: "合并调整", group: 5, parent: "Mod_Consol", page: 156 },
+        { id: "PURP", label: "PURP (未实现利润)", group: 5, parent: "Adj", desc: "Inventory Intra-group trading. Parent Sell vs Sub Sell.", page: 157 },
+        { id: "Inter", label: "内部往来", group: 5, parent: "Adj", desc: "Cancel Receivables/Payables/Loans", page: 158 },
+        
+        { id: "Assoc", label: "IAS 28 联营公司", group: 5, parent: "Mod_Consol", desc: "Equity Accounting (Not consolidated)", page: 164 },
+        { id: "Disp", label: "处置子公司", group: 5, parent: "Mod_Consol", page: 163 },
+        { id: "Case_Golden", label: "案例: Golden Co", group: 7, parent: "Disp", desc: "处置收益计算：Proceeds + Retained - Net Assets - Goodwill", page: 163 },
 
-            // --- Chapter 6: Provisions ---
-            { id: "Ch6", group: 1, label: "Ch6: 预计负债 (IAS 37)", desc: "Provision, Contingent Liability/Asset", page: 64 },
-            { id: "Criteria", group: 2, label: "确认条件", parent: "Ch6", desc: "1. Present Obligation (Legal/Constructive)\n2. Probable outflow\n3. Reliable estimate。", page: 64 },
-            { id: "Case_Onerous", group: 4, label: "亏损合同/重组", parent: "Ch6", desc: "Onerous Contract: Lower of cost to fulfill and penalty.\nRestructuring: Must have detailed plan & raised valid expectation [cite: 1245]。", page: 66 },
+        // === 6. 分析 (Analysis) ===
+        { id: "Mod_Analy", label: "分析与解读", group: 6, parent: "Root", page: 128 },
+        { id: "Ratios", label: "财务比率", group: 6, parent: "Mod_Analy", desc: "ROCE, Gearing, Current Ratio, Working Capital cycles", page: 128 },
+        { id: "Cashflow", label: "IAS 7 现金流", group: 6, parent: "Mod_Analy", desc: "Operating (Indirect), Investing, Financing", page: 122 }
+    ];
 
-            // --- Chapter 7: Tax ---
-            { id: "Ch7", group: 1, label: "Ch7: 所得税 (IAS 12)", desc: "Current Tax & Deferred Tax", page: 69 },
-            { id: "DeferredTax", group: 2, label: "递延所得税", parent: "Ch7", desc: "Temporary Difference (Carrying Amount vs Tax Base) * Rate。", page: 70 },
-            { id: "DT_Logic", group: 3, label: "DTL/DTA 计算", parent: "DeferredTax", desc: "DTL = (CA > TB) * Rate. 计入 Tax Expense (除非源于 Revaluation -> OCI)。", page: 71 },
+    const links = nodes.filter(n => n.parent).map(n => ({ source: n.parent, target: n.id }));
 
-            // --- Chapter 8: Financial Instruments ---
-            { id: "Ch8", group: 1, label: "Ch8: 金融工具", desc: "IFRS 9, IAS 32", page: 77 },
-            { id: "FinAsset", group: 2, label: "金融资产", parent: "Ch8", desc: "Debt: Amortized Cost (if BM is collect). Equity: FVTPL (default) or FVTOCI (election)。", page: 78 },
-            { id: "FinLiab", group: 2, label: "金融负债", parent: "Ch8", desc: "Amortized Cost (Effective Interest Rate method)。", page: 79 },
-            { id: "Compound", group: 2, label: "混合工具 (可转债)", parent: "Ch8", desc: "Split Accounting。\n1. PV of principal+interest (Liability)\n2. Residual (Equity/Option)。", page: 80 },
-            { id: "Case_Tenfold", group: 4, label: "案例: Tenfold Co", parent: "FinAsset", desc: "【教材例题】\nAmortized Cost calculation。\nInitial FV + Transaction costs。\nYear end = Open + EIR Interest - Coupon Received。", page: 81 },
-
-            // --- Chapter 9: Revenue ---
-            { id: "Ch9", group: 1, label: "Ch9: 收入 (IFRS 15)", desc: "5-Step Model", page: 84 },
-            { id: "Steps", group: 2, label: "五步法", parent: "Ch9", desc: "1.Contract 2.Performance Obligations 3.Price 4.Allocate Price 5.Recognize when satisfied。", page: 85 },
-            { id: "Construction", group: 3, label: "建造合同", parent: "Ch9", desc: "按完工百分比确认收入 (Input/Output method)。\n亏损合同立即确认全部损失。", page: 88 },
-            { id: "Case_Quincy", group: 4, label: "案例: Quincy (售后服务)", parent: "Ch9", desc: "【教材例题】\nSale with service ($10m)。\nProduct revenue recognized at point。\nService revenue deferred and recognized over time。", page: 87 },
-
-            // --- Chapter 10: EPS ---
-            { id: "Ch10", group: 1, label: "Ch10: 每股收益 (IAS 33)", desc: "Basic & Diluted EPS", page: 101 },
-            { id: "BasicEPS", group: 2, label: "Basic EPS", parent: "Ch10", desc: "Earnings / WANS.\nBonus Issue: 视同这就存在 (Restate prior yr).\nRights Issue: Calculate TERP。", page: 101 },
-            { id: "DilutedEPS", group: 2, label: "Diluted EPS", parent: "Ch10", desc: "Adjust earnings for interest saving (post-tax).\nAdjust shares for max potential conversion。", page: 103 },
-
-            // --- Chapter 11: Presentation ---
-            { id: "Ch11", group: 1, label: "Ch11: 列报准则", desc: "IAS 8, 10, 21, IFRS 13", page: 105 },
-            { id: "IAS10", group: 2, label: "IAS 10 期后事项", parent: "Ch11", desc: "Adjusting (e.g., Customer bankruptcy confirming bad debt) vs Non-adjusting (e.g., Fire after YE)。", page: 108 },
-            { id: "IAS21", group: 2, label: "IAS 21 外汇", parent: "Ch11", desc: "Monetary items: Retranslate at YE spot rate (Gain/Loss -> SPL).\nNon-monetary: Historical rate。", page: 111 },
-            { id: "Case_Jeffers", group: 4, label: "案例: Jeffers Co", parent: "IAS10", desc: "【教材例题】\nEvents analysis:\n1. Fine confirmed (Adjusting)\n2. Customer bankrupt (Adjusting)\n3. Acquisition finalized (Non-adjusting)。", page: 109 },
-
-            // --- Chapter 12: Single Entity ---
-            { id: "Ch12", group: 1, label: "Ch12: 单体报表编制", desc: "从 Trial Balance 编制 SOFP/SPL", page: 115 },
-            { id: "Technique", group: 2, label: "编制技巧", parent: "Ch12", desc: "注意 Cost of Sales 计算 (Op Inv + Purch - Cl Inv).\n注意 Admin Exp 与 Distribution Exp 分类。", page: 115 },
-
-            // --- Chapter 13: Cash Flows ---
-            { id: "Ch13", group: 1, label: "Ch13: 现金流量表 (IAS 7)", desc: "Indirect Method", page: 122 },
-            { id: "Operating", group: 2, label: "经营活动", parent: "Ch13", desc: "PBIT + Non-cash (Depn) +/- Working Capital changes - Interest - Tax。", page: 123 },
-            { id: "Investing", group: 2, label: "投资活动", parent: "Ch13", desc: "Purchase/Sale of NCA, Interest Received。", page: 122 },
-            { id: "Financing", group: 2, label: "融资活动", parent: "Ch13", desc: "Share issue, Loan repayment, Dividend paid。", page: 122 },
-
-            // --- Chapter 14: Ratios ---
-            { id: "Ch14", group: 1, label: "Ch14: 财报分析", desc: "Performance & Position", page: 128 },
-            { id: "Ratios", group: 2, label: "关键比率", parent: "Ch14", desc: "ROCE, Gearing, Current Ratio, Inventory Days, Receivable Days。", page: 128 },
-
-            // --- Chapter 15 & 16: Consolidation ---
-            { id: "Ch15_16", group: 1, label: "Ch15-16: 合并报表", desc: "IFRS 10, IFRS 3", page: 133 },
-            { id: "W1_W5", group: 2, label: "五步法 (SOFP)", parent: "Ch15_16", desc: "W1: Group Structure/Cost.\nW2: Net Assets of Sub.\nW3: Goodwill.\nW4: NCI.\nW5: Group RE。", page: 142 },
-            { id: "PURP", group: 3, label: "PURP (未实现利润)", parent: "Ch15_16", desc: "Inventory PURP.\nSeller = Parent: Dr RE(P), Cr Inv.\nSeller = Sub: Dr RE(S), Cr Inv (Impacts NCI)。", page: 157 },
-            { id: "Goodwill_Calc", group: 3, label: "商誉计算", parent: "Ch15_16", desc: "Cost of Inv + FV of NCI - FV of Net Assets.\nNegative Goodwill -> Gain in SPL。", page: 138 },
-            { id: "Associates", group: 3, label: "联营公司 (IAS 28)", parent: "Ch15_16", desc: "Equity Accounting.\nSOFP: Cost + Share of Post-Acq Profit - Div.\nSPL: Share of Profit。", page: 164 },
-            { id: "Case_Golden", group: 4, label: "案例: Golden Co", parent: "Ch15_16", desc: "【教材例题】\n处置子公司 (Disposal)。\nGroup Gain = Proceeds + FV retained interest - (Net Assets + Goodwill)。", page: 163 }
-        ],
-        links: [
-            // Roots
-            { source: "FR", target: "Ch1" }, { source: "FR", target: "Ch2" }, { source: "FR", target: "Ch3" },
-            { source: "FR", target: "Ch4" }, { source: "FR", target: "Ch5" }, { source: "FR", target: "Ch6" },
-            { source: "FR", target: "Ch7" }, { source: "FR", target: "Ch8" }, { source: "FR", target: "Ch9" },
-            { source: "FR", target: "Ch10" }, { source: "FR", target: "Ch11" }, { source: "FR", target: "Ch12" },
-            { source: "FR", target: "Ch13" }, { source: "FR", target: "Ch14" }, { source: "FR", target: "Ch15_16" },
-
-            // Connections
-            { source: "Ch1", target: "SOFP" }, { source: "Ch1", target: "SPL" }, { source: "Ch1", target: "SOCE" },
-            { source: "Ch2", target: "Qualitative" }, { source: "Ch2", target: "Elements" }, { source: "Ch2", target: "Measurement" }, { source: "Measurement", target: "Case_Drexler" },
-            { source: "Ch3", target: "IFRS_S1" },
-            { source: "Ch4", target: "IAS16" }, { source: "IAS16", target: "Depreciation" }, { source: "IAS16", target: "Revaluation" }, { source: "IAS16", target: "Case_Elite" }, { source: "Revaluation", target: "Case_Topsy" },
-            { source: "Ch4", target: "IAS38" }, { source: "IAS38", target: "RD" }, { source: "IAS38", target: "Case_Assoria" },
-            { source: "Ch4", target: "IAS40" }, { source: "IAS40", target: "Case_Carter" },
-            { source: "Ch4", target: "IAS36" }, { source: "IAS36", target: "CGU" }, { source: "IAS36", target: "Case_Riley" },
-            { source: "Ch4", target: "IAS23" }, { source: "IAS23", target: "Case_Fido" },
-            { source: "Ch4", target: "IAS2" }, { source: "IAS2", target: "Case_Litch" },
-            { source: "Ch4", target: "IFRS5" },
-            { source: "Ch4", target: "IAS41" }, { source: "IAS41", target: "Case_Shaw" },
-            { source: "Ch5", target: "ROU_Liab" }, { source: "Ch5", target: "Exemptions" }, { source: "Ch5", target: "Case_Pebworth" },
-            { source: "Ch6", target: "Criteria" }, { source: "Ch6", target: "Case_Onerous" },
-            { source: "Ch7", target: "DeferredTax" }, { source: "DeferredTax", target: "DT_Logic" },
-            { source: "Ch8", target: "FinAsset" }, { source: "Ch8", target: "FinLiab" }, { source: "Ch8", target: "Compound" }, { source: "FinAsset", target: "Case_Tenfold" },
-            { source: "Ch9", target: "Steps" }, { source: "Ch9", target: "Construction" }, { source: "Ch9", target: "Case_Quincy" },
-            { source: "Ch10", target: "BasicEPS" }, { source: "Ch10", target: "DilutedEPS" },
-            { source: "Ch11", target: "IAS10" }, { source: "Ch11", target: "IAS21" }, { source: "IAS10", target: "Case_Jeffers" },
-            { source: "Ch12", target: "Technique" },
-            { source: "Ch13", target: "Operating" }, { source: "Ch13", target: "Investing" }, { source: "Ch13", target: "Financing" },
-            { source: "Ch14", target: "Ratios" },
-            { source: "Ch15_16", target: "W1_W5" }, { source: "Ch15_16", target: "PURP" }, { source: "Ch15_16", target: "Goodwill_Calc" }, { source: "Ch15_16", target: "Associates" }, { source: "Ch15_16", target: "Case_Golden" }
-        ]
-    };
-
-    // --- 2. D3.js 图谱渲染逻辑 ---
-    
+    // --- D3.js 渲染引擎 ---
     const width = window.innerWidth;
     const height = window.innerHeight;
-
-    const zoom = d3.zoom()
-        .scaleExtent([0.1, 4])
-        .on("zoom", (event) => {
-            g.attr("transform", event.transform);
-        });
-
-    const svg = d3.select("#graph-container").append("svg")
-        .attr("width", width)
-        .attr("height", height)
-        .call(zoom)
+    
+    const svg = d3.select("#graph-area").append("svg")
+        .attr("width", width).attr("height", height)
+        .call(d3.zoom().scaleExtent([0.1, 4]).on("zoom", (e) => g.attr("transform", e.transform)))
         .on("dblclick.zoom", null);
 
     const g = svg.append("g");
 
     // 颜色映射
     const colorMap = {
-        0: "#ffffff", // Root
-        1: "#ef4444", // Chapter
-        2: "#f59e0b", // Standard/Topic
-        3: "#10b981", // Detail
-        4: "#8b5cf6"  // Case
+        0: "#fff", 1: "#ef4444", 2: "#f59e0b", 3: "#10b981", 4: "#06b6d4", 5: "#8b5cf6", 6: "#ec4899", 7: "#64748b"
     };
 
-    const radiusMap = {
-        0: 30,
-        1: 20,
-        2: 12,
-        3: 8,
-        4: 10
-    };
-
-    const simulation = d3.forceSimulation(data.nodes)
-        .force("link", d3.forceLink(data.links).id(d => d.id).distance(d => {
-            if (d.target.group === 1) return 150;
-            if (d.target.group === 4) return 100;
-            return 70;
-        }))
-        .force("charge", d3.forceManyBody().strength(-300))
+    const simulation = d3.forceSimulation(nodes)
+        .force("link", d3.forceLink(links).id(d => d.id).distance(d => d.target.group === 7 ? 60 : 100))
+        .force("charge", d3.forceManyBody().strength(-400))
         .force("center", d3.forceCenter(width / 2, height / 2))
-        .force("collide", d3.forceCollide().radius(d => radiusMap[d.group] + 15));
+        .force("collide", d3.forceCollide().radius(30).iterations(2));
 
-    const link = g.append("g")
-        .attr("stroke", "#475569")
-        .attr("stroke-opacity", 0.6)
-        .selectAll("line")
-        .data(data.links)
-        .join("line")
-        .attr("stroke-width", d => Math.sqrt(2));
+    // 连线
+    const link = g.append("g").selectAll("line")
+        .data(links).join("line")
+        .attr("stroke", "#334155").attr("stroke-width", 1.5).attr("stroke-opacity", 0.6);
 
-    const node = g.append("g")
-        .selectAll("circle")
-        .data(data.nodes)
-        .join("circle")
-        .attr("r", d => radiusMap[d.group])
+    // 节点容器
+    const node = g.append("g").selectAll("g")
+        .data(nodes).join("g")
+        .call(d3.drag().on("start", dragstart).on("drag", dragged).on("end", dragend))
+        .on("click", (e, d) => { e.stopPropagation(); showInfo(d); });
+
+    // 节点圆圈
+    node.append("circle")
+        .attr("r", d => d.group === 0 ? 35 : (d.group === 7 ? 8 : 15))
         .attr("fill", d => colorMap[d.group])
-        .attr("stroke", "#fff")
-        .attr("stroke-width", 1.5)
-        .attr("cursor", "pointer")
-        .call(drag(simulation));
+        .attr("stroke", "#fff").attr("stroke-width", 2)
+        .attr("class", "node-circle");
 
-    const text = g.append("g")
-        .selectAll("text")
-        .data(data.nodes)
-        .join("text")
+    // 节点文字
+    node.append("text")
         .text(d => d.label)
-        .attr("x", 12)
-        .attr("y", 4)
-        .attr("font-size", d => d.group === 1 ? "14px" : "10px")
-        .attr("fill", "#cbd5e1")
+        .attr("x", d => d.group === 0 ? 40 : 20)
+        .attr("y", 5)
+        .style("font-size", d => d.group === 0 ? "16px" : "12px")
+        .style("fill", "#e2e8f0")
         .style("pointer-events", "none")
-        .style("text-shadow", "1px 1px 2px #000");
+        .style("text-shadow", "2px 2px 4px #000");
 
-    // --- 3. 交互逻辑 ---
+    // --- 逻辑函数 ---
+    function dragstart(e, d) { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
+    function dragged(e, d) { d.fx = e.x; d.fy = e.y; }
+    function dragend(e, d) { if (!e.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }
 
-    node.on("click", (event, d) => {
-        showDetails(d);
-        event.stopPropagation();
+    simulation.on("tick", () => {
+        link.attr("x1", d => d.source.x).attr("y1", d => d.source.y)
+            .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+        node.attr("transform", d => `translate(${d.x},${d.y})`);
     });
 
-    function closeSidebar() {
-        document.getElementById("sidebar").classList.add("hidden");
+    // 侧边栏逻辑
+    function toggleSidebar(show) {
+        const sb = document.getElementById("sidebar");
+        show ? sb.classList.add("active") : sb.classList.remove("active");
     }
 
-    document.getElementById("search").addEventListener("input", function(e) {
-        const term = e.target.value.toLowerCase();
-        if (!term) {
-            node.attr("opacity", 1);
-            link.attr("opacity", 0.6);
-            text.attr("opacity", 1);
-            return;
-        }
-
-        const matchedNodes = data.nodes.filter(n => 
-            n.label.toLowerCase().includes(term) || 
-            n.desc.toLowerCase().includes(term)
-        );
-        const matchedIds = new Set(matchedNodes.map(n => n.id));
-
-        node.attr("opacity", d => matchedIds.has(d.id) ? 1 : 0.1);
-        link.attr("opacity", d => matchedIds.has(d.source.id) && matchedIds.has(d.target.id) ? 0.6 : 0.05);
-        text.attr("opacity", d => matchedIds.has(d.id) ? 1 : 0.1);
-    });
-
-    function showDetails(d) {
-        const sidebar = document.getElementById("sidebar");
-        const details = document.getElementById("node-details");
+    function showInfo(d) {
+        const content = document.getElementById("content");
+        const groupNames = ["Core", "Framework", "Assets", "Liabilities", "Performance", "Consolidation", "Analysis", "Case"];
+        const badgeColor = colorMap[d.group];
         
-        sidebar.classList.remove("hidden");
-        
-        let typeLabel = "";
-        if(d.group === 1) typeLabel = '<span class="tag" style="background:var(--node-chapter)">Chapter</span>';
-        else if(d.group === 2) typeLabel = '<span class="tag" style="background:var(--node-standard)">Standard</span>';
-        else if(d.group === 4) typeLabel = '<span class="tag" style="background:var(--node-case)">Case</span>';
-        else typeLabel = '<span class="tag" style="background:var(--node-concept)">Topic</span>';
-
-        // PDF Link Generation logic
-        // Assumes "FR电子教材.pdf" is in the same directory.
-        let pdfLink = d.page ? `<a href="FR电子教材.pdf#page=${d.page}" target="_blank" class="pdf-btn">📖 打开教材 (第 ${d.page} 页)<span><br>点击跳转至 PDF</span></a>` : '';
-
-        let contentHtml = `
-            <h2>${typeLabel} ${d.label}</h2>
-            <div class="content-block">
-                <strong>核心要点：</strong><br>
-                ${d.desc.replace(/\n/g, "<br>")}
-            </div>
-            ${pdfLink}
+        // 动态生成内容
+        let html = `
+            <span class="badge" style="background:${badgeColor}">${groupNames[d.group]}</span>
+            <h2>${d.label}</h2>
+            <div class="desc">${d.desc || "点击下方按钮查看教材详情。"}</div>
         `;
 
-        if (d.group === 4) {
-            contentHtml = `
-                <h2>${typeLabel} ${d.label}</h2>
-                <div class="example-box">
-                    ${d.desc}
-                </div>
-                ${pdfLink}
-                <p style="margin-top:15px; font-size:0.85rem; color:#94a3b8;">
-                    * 案例解析基于教材原文或练习题。
-                </p>
+        // 案例特殊样式
+        if(d.group === 7) {
+            html += `<div class="example-box" style="border-left-color:${badgeColor}">${d.desc}</div>`;
+        }
+
+        // PDF 按钮
+        if (d.page) {
+            html += `
+                <a href="FR电子教材.pdf#page=${d.page}" target="_blank" class="pdf-btn">
+                    <span>📖 打开教材 (第 ${d.page} 页)</span>
+                </a>
             `;
         }
 
-        details.innerHTML = contentHtml;
+        content.innerHTML = html;
+        toggleSidebar(true);
     }
 
-    function drag(simulation) {
-        function dragstarted(event, d) {
-            if (!event.active) simulation.alphaTarget(0.3).restart();
-            d.fx = d.x;
-            d.fy = d.y;
-        }
-
-        function dragged(event, d) {
-            d.fx = event.x;
-            d.fy = event.y;
-        }
-
-        function dragended(event, d) {
-            if (!event.active) simulation.alphaTarget(0);
-            d.fx = null;
-            d.fy = null;
-        }
-
-        return d3.drag()
-            .on("start", dragstarted)
-            .on("drag", dragged)
-            .on("end", dragended);
-    }
-
-    simulation.on("tick", () => {
-        link
-            .attr("x1", d => d.source.x)
-            .attr("y1", d => d.source.y)
-            .attr("x2", d => d.target.x)
-            .attr("y2", d => d.target.y);
-
-        node
-            .attr("cx", d => d.x)
-            .attr("cy", d => d.y);
-
-        text
-            .attr("x", d => d.x + 12)
-            .attr("y", d => d.y + 4);
+    // 搜索逻辑
+    document.getElementById("search").addEventListener("input", (e) => {
+        const val = e.target.value.toLowerCase();
+        node.style("opacity", d => d.label.toLowerCase().includes(val) ? 1 : 0.1);
+        link.style("opacity", d => d.source.label.toLowerCase().includes(val) || d.target.label.toLowerCase().includes(val) ? 1 : 0.05);
     });
 
 </script>
